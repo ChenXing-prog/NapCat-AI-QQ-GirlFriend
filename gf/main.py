@@ -142,11 +142,11 @@ app = FastAPI(
 # ======================================================================
 
 def _calc_wait(user_id: str) -> float:
-    """Adaptive buffer wait: weighted blend of session + historical gaps.
+    """Adaptive buffer wait: current session gaps weighted 70%, history 30%.
 
-    - Current session gaps (same conversation, <5min apart): weight 70%
-    - Historical average (all time, up to 50): weight 30%
-    - Falls back to MSG_BUFFER_DEFAULT (8s) for new users.
+    After each message, session gaps are updated. The next timer uses the
+    latest calculation. When the user stops sending for `wait` seconds,
+    all buffered messages are merged into one reply.
     """
     global _memory
     if _memory is None:
@@ -155,20 +155,24 @@ def _calc_wait(user_id: str) -> float:
     session_gaps = prefs.get("msg_session_gaps", [])
     all_gaps = prefs.get("msg_gaps", [])
 
-    # If no data at all, use default
+    # No data at all → default
     if not all_gaps:
         return MSG_BUFFER_DEFAULT
 
-    # Historical average from all recorded gaps
     hist_avg = sum(all_gaps) / len(all_gaps)
 
-    # Session average (current conversation)
-    if len(session_gaps) >= 2:
+    # Current session: 1 gap = use it directly; 2+ = average
+    if len(session_gaps) == 1:
+        sess_avg = session_gaps[0]
+    elif len(session_gaps) >= 2:
         sess_avg = sum(session_gaps) / len(session_gaps)
+    else:
+        sess_avg = None
+
+    if sess_avg is not None:
         wait = MSG_SESSION_WEIGHT * sess_avg + (1 - MSG_SESSION_WEIGHT) * hist_avg
     else:
-        # Not enough session data, lean on history
-        wait = hist_avg * 1.3  # add 30% buffer since we're unsure
+        wait = hist_avg * 1.5  # No session data yet, buffer history by 50%
 
     return min(MSG_BUFFER_MAX, max(MSG_BUFFER_MIN, wait))
 
