@@ -1,0 +1,25 @@
+# NapCatQQ 部署配置
+# 用于 macOS 本地开发或 Linux 服务器部署
+
+version: "3.8"
+
+services:
+  napcat:
+    image: mlikiowa/napcat-docker:latest
+    container_name: napcat
+    restart: unless-stopped
+    environment:
+      - NAPCAT_UID=1000
+      - NAPCAT_GID=1000
+    ports:
+      # HTTP API → 我们的 gf 后端通过这个发消息
+      - "3000:3000"
+      # WebSocket → 我们的 gf 后端通过这个收消息
+      - "3001:3001"
+      # VNC 端口 → 浏览器打开 http://localhost:6099 扫码登录 QQ
+      - "6099:6099"
+    volumes:
+      # NapCatQQ 配置和 QQ 登录状态持久化
+      - ./napcat-data/config:/app/napcat/config
+      - ./napcat-data/qq:/app/QQ
+    mac_address: "02:42:ac:11:00:01"

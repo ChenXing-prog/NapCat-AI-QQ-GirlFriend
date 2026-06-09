@@ -1,0 +1,21 @@
+# Sensitive
+gf/.env
+scripts/.env
+napcat-data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+._*
+
+# Data
+data/
+*.jsonl
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,968 @@
+{
+  "started_at": "2026-06-09T13:43:35",
+  "total": 137,
+  "completed": [
+    "026975AE958E6C161A0587EF298C555E.jpg",
+    "0988ED40B25C911069AD277F2EAC5B94.jpg",
+    "09BECEF54D1D735DC633FC44156E3F66.jpg",
+    "0B85CBFA0721BD5C913F4D5DC1FC591C.jpg",
+    "0BCB2B08F410D303B40025D677A57FD0.jpg",
+    "0C0B9509F1EDCA53B0A2B53E8B69C899.jpg",
+    "11BECA0FBA12E27693E470B8FEA6F2F7.jpg",
+    "12BA80A7C79F7D8A884AC988FEC44FB7.jpg",
+    "13EA8A50090EB857F787A5780927679D.jpg",
+    "15852BAA42C32743D6C464422A7A0706.jpg",
+    "16B1DADBAA2546AB45AB9DA488445E6C.jpg",
+    "176F13B2A25C4BA3BC78BBA1D33D1446.jpg",
+    "1FF754C6228A0DCE86811570F97FEA6B.jpg",
+    "2013A477374C64292337DF19114084C5.jpg",
+    "231BE894E36257CB2B59BE2DD77DDB0F.jpg",
+    "232CF7D58F87A270EBF2D196415BF8C0.jpg",
+    "28B1574AA798C94C0918F8487EAA520C.jpg",
+    "2CCC90191F1F7D07A963AFD21C77B563.jpg",
+    "2CF8C3B294178F41E058544D0E0FCD64.jpg",
+    "2D71C856AF217B53C4FC522AA61C711E.jpg",
+    "2F4324A5BBD33ADE4C98A5CEF5AD91B8.jpg",
+    "2F4369552EAC6F21CAA0951CB84E59B5.jpg",
+    "2FCF34ECACC49B376E96F78F698B5BDF.jpg",
+    "2FDD82BE9E0E9ED5453427C42F20BF52.jpg",
+    "3029B1DA1B5C44EA435B9B1CC0B8F971.jpg",
+    "30E4FBC253131E2E68B2D28E752F3052.jpg",
+    "32B6916161F3B41C8FFCF36B1DB293B8.jpg",
+    "33E95406C6EE2B3EB45D9B32BE240293.jpg",
+    "347A5433C141AA96D2CAA7935120CF70.jpg",
+    "34CDEA183E17B49C138223BBD47900AC.jpg",
+    "368AB213C830264C739FD0A34354ED9F.jpg",
+    "38041452D0CC843F3A4429A5A69301D9.jpg",
+    "3C680236B65D0CADC9A259013FD24ADE.jpg",
+    "3DE61A0B96F8E8779126C4859360E176.jpg",
+    "42A6E942E8A90CFEFC8D5E75018CC38A.jpg",
+    "438AB375AFEF49FC1EDC8EE23BCACF0A.jpg",
+    "43DCEC172B43A38CAB37AFDFF02B8CA2.jpg",
+    "444D1730C879DB171B6CFBE16274D8F8.jpg",
+    "4D314DAB8BCB926B7E8BA09B7600DCFD.jpg",
+    "4D42AB25AB62A214B6CC72ABB18344CC.jpg",
+    "4E999F8CD0662F10144FC85CF5BBDFC6.jpg",
+    "4F07F5FD4480B3F2541E27A899B30C02.jpg",
+    "57DC678DC2DFE3FDF91FB493D1F11D8F.jpg",
+    "5B2BB96098E34204AC61BBFAFD155134.jpg",
+    "5B9ADEE5D3127EADABD9C3EEBB1D6440.jpg",
+    "5C4745399150CF41A9632F4D9644EEC3.jpg",
+    "5DE328F5641C49B70E48C76C4BDFFBC1.gif",
+    "628570A7019039D0A5D974CE400B1697.jpg",
+    "63F8B8CF06F6DC4758CECAE3FB61E4F0.jpg",
+    "645051D6AB92DB4A348C1FBEED63C980.jpg",
+    "64D07C0FE89525A15551F5F698EEF4C1.jpg",
+    "6528DE0A40A3E35AA89DD3AEB87A9672.jpg",
+    "657B8AC228D56A90F1EF95CF5C51C3D5.jpg",
+    "6A13D619C95270FA10A514AFFD0103A4.jpg",
+    "6B159C7DD06CD922AB5D168683B207E3.jpg",
+    "6E4B91446E5C7488610078D51D7D5244.jpg",
+    "6E714AF59CAE29A5EC701996A9128032.jpg",
+    "6E8CD53A331C1CFBDFE2F693189C1C4F.jpg",
+    "73A83F2844B5C84CFDDC2C71F95ACC2F.jpg",
+    "79CFCCDCC0E2F46748E510539C949DEE.jpg",
+    "79ED0EC253ACEF4726B174AD6444AC1F.jpg",
+    "7B153D5D38F788208DE4EE5CD3D64F4C.jpg",
+    "7C3D05AD342D197D57702848E854DD81.jpg",
+    "7D2F17AE337BE0A66B6138A9FDF604B2.jpg",
+    "80326B71C206ED954AAEDC1011F40F5D.jpg",
+    "804C9040500121D1547678C43B4D7528.jpg",
+    "80EFF06BB344F9960A1B6327825B6103.jpg",
+    "82003F95FA239B297ADD2D11A42045C7.jpg",
+    "834120477CBBDEC7BE1CD189C106924F.jpg",
+    "84AE605EF9628CA475C969761BA574FC.jpg",
+    "882D34EABF17A14CA297208E016CE6E7.jpg",
+    "88F4A5AE354A45EB83E9BF6289C537A8.jpg",
+    "893ABB395AD1C6F7AAC3AA6D77C29FF8.jpg",
+    "898B56A8498A94ABFCDD4E88552F295B.jpg",
+    "8A39CBCC4712B16881FB3DF342314F8E.jpg",
+    "8A4EADF591B98D79C59BA40B77A2FF9F.jpg",
+    "8C97B9D6FD1FA4AC0D4ED937F7B960BD.jpg",
+    "93631377355AE4ED52CC03E12F931B4D.jpg",
+    "9819BBE9A9F88169A09DAEA5F94874A2.jpg",
+    "995B4EDBF1F38745BF8740F5BC3B3641.gif",
+    "999801B8104660095F021D0408C5A98B.jpg",
+    "9A1C485D3F72867C1E9B8B46F6AD0B81.jpg",
+    "9D30D13CFAF60DE4DF9F24AE66182290.jpg",
+    "9E04CE4EC40B8348087B931E050D87BD.jpg",
+    "9EE5B542B5D88C8A79A95C408E7CCC5C.jpg",
+    "9FC500D5E668B87CD738E55358ED0639.jpg",
+    "A55C9B72A2F76155D11D252FB8B9865C.jpg",
+    "A61FFA2E223FE5F36F423A7CF728544B.jpg",
+    "A80FC77E5E0C40FF1B1D65FFE2B6B69F.jpg",
+    "A9658ACBBBB2124E0C9B6D8A16FBB03E.jpg",
+    "A9D8868A4A19F402FD7BDE2BB5CEA6EE.jpg",
+    "AAC83DE08EEA3A0F73AC584A93E1F479.jpg",
+    "AB70F77C5E8724711C7CDD1ADCB0813D.jpg",
+    "ACFA86600E33064C88C1E7FD07EAC180.jpg",
+    "AE37143EDC4B840AFDC37C1C9444758E.jpg",
+    "AF5F3C97705DA4DB24208BD614337494.jpg",
+    "AF61EF9BF73E6BB2106360DD88A3915F.jpg",
+    "AF8370FC719467A894A909C09319749E.jpg",
+    "B076447743F5929B4AC0180EA4959400.jpg",
+    "B884B2D9ACA4FAF3B6BF10E70BB72973.jpg",
+    "BC8A0B4F00E753FE0E84E38DB4CE16FD.jpg",
+    "BE04705C2B14174E5FC222A4A08E4ED0.jpg",
+    "BE3186E34FB705487B26A800541A668F.jpg",
+    "C25A48C9242CA3950F0194453D9CFDB4.jpg",
+    "C285A96B6B7DFC5FDC57F35DEBD95B40.jpg",
+    "CDB05135FB87B6A53AB0770B6500C5E2.jpg",
+    "CF35F5EE4EB3E2A80114CE8F423831CC.jpg",
+    "D1C287E43D2D6F779D7153E022B05952.jpg",
+    "D28ECF2FF4A687F736BAFB4BC07259C5.jpg",
+    "D4E583AAFA403D36CD072856699FFFAC.jpg",
+    "DB8E5EB45EB14C2AD9DE9BCC8B9060B2.jpg",
+    "DC8A302B19010402C94A017F8E1A907D.jpg",
+    "DD3F99D632B770CDD2E69891D771EAD3.jpg",
+    "E00DB312E7F7C34DB9E641ED0EAA97EA.jpg",
+    "E02080F1CED0B6465CC6B562A6649EEF.jpg",
+    "E0384F680EFBA32A5766686E3A3D6EBC.jpg",
+    "E166282B0AA977EF96E3B4B9D6F8E2FC.jpg",
+    "E2289E391EF7F61F9A36720006143879.jpg",
+    "E2E5F3188BEB1E4CFE003AE125C84738.jpg",
+    "E5890045A5170FC6E0085B02875D7BAA.jpg",
+    "E7945E51D379802B7D583C2F2E085363.jpg",
+    "E8F00C893E62C8B4F6E6F7A028608456.jpg",
+    "EA4347F96B27B2F23509286A4E3CC4B5.jpg",
+    "EAAB2F8BCF9334E140D03B03FA3FF9EA.jpg",
+    "EC174C60B17F42F0ABC5FC96CBB05E84.jpg",
+    "ECCF1F58726F4D25340309EC8E7D631C.jpg",
+    "ED15DDB682D01DEF28BAF4F8EBFD4145.jpg",
+    "EDAA91DACBA21F25F640A0DE86543F42.jpg",
+    "EE1061D7399AD56313B7C3E9C4383A6E.jpg",
+    "F2B1D818370E389E06CBE07DE05C83B2.jpg",
+    "F792C602343C01991C42371EE20DDCA3.jpg",
+    "F8205429CD718C1C24D34A08DE714F8C.jpg",
+    "F8C80B58DB20CDF5444463C6B87EEB48.jpg",
+    "F8E73382F215F2DD8D11333363F97CA0.jpg",
+    "F9221D8D3CD0266B413A4B21CD27C9A9.jpg",
+    "FBF340135E9399FCCCE1197132F377D1.jpg",
+    "FCAE091E0339C5ED698BA12BFB675CB0.jpg"
+  ],
+  "failed": {},
+  "results": {
+    "A9D8868A4A19F402FD7BDE2BB5CEA6EE.jpg": {
+      "tag": "teary",
+      "confidence": 0.8,
+      "description": "委屈含泪",
+      "reason": ""
+    },
+    "A61FFA2E223FE5F36F423A7CF728544B.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "F2B1D818370E389E06CBE07DE05C83B2.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "D4E583AAFA403D36CD072856699FFFAC.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "7D2F17AE337BE0A66B6138A9FDF604B2.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "CDB05135FB87B6A53AB0770B6500C5E2.jpg": {
+      "tag": "smile",
+      "confidence": 0.9,
+      "description": "微笑开心",
+      "reason": ""
+    },
+    "12BA80A7C79F7D8A884AC988FEC44FB7.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "9E04CE4EC40B8348087B931E050D87BD.jpg": {
+      "tag": "star_eyes",
+      "confidence": 0.8,
+      "description": "星星眼",
+      "reason": ""
+    },
+    "628570A7019039D0A5D974CE400B1697.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困了",
+      "reason": ""
+    },
+    "93631377355AE4ED52CC03E12F931B4D.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不高兴",
+      "reason": ""
+    },
+    "E8F00C893E62C8B4F6E6F7A028608456.jpg": {
+      "tag": "questioning",
+      "confidence": 0.8,
+      "description": "疑惑思考",
+      "reason": ""
+    },
+    "84AE605EF9628CA475C969761BA574FC.jpg": {
+      "tag": "star_eyes",
+      "confidence": 0.8,
+      "description": "崇拜",
+      "reason": ""
+    },
+    "347A5433C141AA96D2CAA7935120CF70.jpg": {
+      "tag": "teary",
+      "confidence": 0.8,
+      "description": "委屈含泪",
+      "reason": ""
+    },
+    "2F4369552EAC6F21CAA0951CB84E59B5.jpg": {
+      "tag": "teary",
+      "confidence": 0.8,
+      "description": "委屈含泪",
+      "reason": ""
+    },
+    "A9658ACBBBB2124E0C9B6D8A16FBB03E.jpg": {
+      "tag": "cry",
+      "confidence": 0.8,
+      "description": "表情悲伤",
+      "reason": ""
+    },
+    "9FC500D5E668B87CD738E55358ED0639.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "EAAB2F8BCF9334E140D03B03FA3FF9EA.jpg": {
+      "tag": "love",
+      "confidence": 0.8,
+      "description": "比心示爱",
+      "reason": ""
+    },
+    "EA4347F96B27B2F23509286A4E3CC4B5.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "645051D6AB92DB4A348C1FBEED63C980.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "AAC83DE08EEA3A0F73AC584A93E1F479.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "57DC678DC2DFE3FDF91FB493D1F11D8F.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "E02080F1CED0B6465CC6B562A6649EEF.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "AF5F3C97705DA4DB24208BD614337494.jpg": {
+      "tag": "peek",
+      "confidence": 0.8,
+      "description": "暗中观察",
+      "reason": ""
+    },
+    "2FDD82BE9E0E9ED5453427C42F20BF52.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "8A39CBCC4712B16881FB3DF342314F8E.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "73A83F2844B5C84CFDDC2C71F95ACC2F.jpg": {
+      "tag": "cry",
+      "confidence": 0.8,
+      "description": "大哭",
+      "reason": ""
+    },
+    "1FF754C6228A0DCE86811570F97FEA6B.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞",
+      "reason": ""
+    },
+    "13EA8A50090EB857F787A5780927679D.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困了",
+      "reason": ""
+    },
+    "E2289E391EF7F61F9A36720006143879.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "委屈可爱",
+      "reason": ""
+    },
+    "5B9ADEE5D3127EADABD9C3EEBB1D6440.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "EDAA91DACBA21F25F640A0DE86543F42.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困倦",
+      "reason": ""
+    },
+    "232CF7D58F87A270EBF2D196415BF8C0.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "893ABB395AD1C6F7AAC3AA6D77C29FF8.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "79CFCCDCC0E2F46748E510539C949DEE.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "231BE894E36257CB2B59BE2DD77DDB0F.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "A55C9B72A2F76155D11D252FB8B9865C.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "E166282B0AA977EF96E3B4B9D6F8E2FC.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "026975AE958E6C161A0587EF298C555E.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "EC174C60B17F42F0ABC5FC96CBB05E84.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "6E4B91446E5C7488610078D51D7D5244.jpg": {
+      "tag": "cry",
+      "confidence": 0.9,
+      "description": "大哭",
+      "reason": ""
+    },
+    "657B8AC228D56A90F1EF95CF5C51C3D5.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "11BECA0FBA12E27693E470B8FEA6F2F7.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "不乐意",
+      "reason": ""
+    },
+    "6E714AF59CAE29A5EC701996A9128032.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "AF8370FC719467A894A909C09319749E.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞脸红",
+      "reason": ""
+    },
+    "444D1730C879DB171B6CFBE16274D8F8.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "2CF8C3B294178F41E058544D0E0FCD64.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "995B4EDBF1F38745BF8740F5BC3B3641.gif": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞",
+      "reason": ""
+    },
+    "438AB375AFEF49FC1EDC8EE23BCACF0A.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "D1C287E43D2D6F779D7153E022B05952.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困了",
+      "reason": ""
+    },
+    "E00DB312E7F7C34DB9E641ED0EAA97EA.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "9A1C485D3F72867C1E9B8B46F6AD0B81.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "0C0B9509F1EDCA53B0A2B53E8B69C899.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "F8C80B58DB20CDF5444463C6B87EEB48.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "2F4324A5BBD33ADE4C98A5CEF5AD91B8.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "0BCB2B08F410D303B40025D677A57FD0.jpg": {
+      "tag": "hug",
+      "confidence": 0.8,
+      "description": "拥抱",
+      "reason": ""
+    },
+    "E7945E51D379802B7D583C2F2E085363.jpg": {
+      "tag": "smile",
+      "confidence": 0.8,
+      "description": "微笑",
+      "reason": ""
+    },
+    "FCAE091E0339C5ED698BA12BFB675CB0.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "AF61EF9BF73E6BB2106360DD88A3915F.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "DC8A302B19010402C94A017F8E1A907D.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "32B6916161F3B41C8FFCF36B1DB293B8.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "8C97B9D6FD1FA4AC0D4ED937F7B960BD.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞脸红",
+      "reason": ""
+    },
+    "C25A48C9242CA3950F0194453D9CFDB4.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "CF35F5EE4EB3E2A80114CE8F423831CC.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "卖萌可爱",
+      "reason": ""
+    },
+    "C285A96B6B7DFC5FDC57F35DEBD95B40.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "80EFF06BB344F9960A1B6327825B6103.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "F8205429CD718C1C24D34A08DE714F8C.jpg": {
+      "tag": "tsundere",
+      "confidence": 0.8,
+      "description": "傲娇",
+      "reason": ""
+    },
+    "ACFA86600E33064C88C1E7FD07EAC180.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "5C4745399150CF41A9632F4D9644EEC3.jpg": {
+      "tag": "crying",
+      "confidence": 0.8,
+      "description": "委屈含泪",
+      "reason": "unknown_tag: crying"
+    },
+    "4D314DAB8BCB926B7E8BA09B7600DCFD.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "DB8E5EB45EB14C2AD9DE9BCC8B9060B2.jpg": {
+      "tag": "cute",
+      "confidence": 0.9,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "3C680236B65D0CADC9A259013FD24ADE.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "804C9040500121D1547678C43B4D7528.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "F792C602343C01991C42371EE20DDCA3.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "ED15DDB682D01DEF28BAF4F8EBFD4145.jpg": {
+      "tag": "questioning",
+      "confidence": 0.8,
+      "description": "疑惑不解",
+      "reason": ""
+    },
+    "BE04705C2B14174E5FC222A4A08E4ED0.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "4E999F8CD0662F10144FC85CF5BBDFC6.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞",
+      "reason": ""
+    },
+    "898B56A8498A94ABFCDD4E88552F295B.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "2CCC90191F1F7D07A963AFD21C77B563.jpg": {
+      "tag": "smirk",
+      "confidence": 0.8,
+      "description": "坏笑",
+      "reason": ""
+    },
+    "6B159C7DD06CD922AB5D168683B207E3.jpg": {
+      "tag": "cute",
+      "confidence": 0.9,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "E5890045A5170FC6E0085B02875D7BAA.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "9819BBE9A9F88169A09DAEA5F94874A2.jpg": {
+      "tag": "smirk",
+      "confidence": 0.8,
+      "description": "坏笑",
+      "reason": ""
+    },
+    "7B153D5D38F788208DE4EE5CD3D64F4C.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "42A6E942E8A90CFEFC8D5E75018CC38A.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "4F07F5FD4480B3F2541E27A899B30C02.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.9,
+      "description": "困了",
+      "reason": ""
+    },
+    "9EE5B542B5D88C8A79A95C408E7CCC5C.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "7C3D05AD342D197D57702848E854DD81.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "999801B8104660095F021D0408C5A98B.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "368AB213C830264C739FD0A34354ED9F.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "卖萌可爱",
+      "reason": ""
+    },
+    "5B2BB96098E34204AC61BBFAFD155134.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "BE3186E34FB705487B26A800541A668F.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "43DCEC172B43A38CAB37AFDFF02B8CA2.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "9D30D13CFAF60DE4DF9F24AE66182290.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "38041452D0CC843F3A4429A5A69301D9.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "表情可爱",
+      "reason": ""
+    },
+    "BC8A0B4F00E753FE0E84E38DB4CE16FD.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困了",
+      "reason": ""
+    },
+    "09BECEF54D1D735DC633FC44156E3F66.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "DD3F99D632B770CDD2E69891D771EAD3.jpg": {
+      "tag": "begging",
+      "confidence": 0.9,
+      "description": "求收养",
+      "reason": ""
+    },
+    "88F4A5AE354A45EB83E9BF6289C537A8.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "D28ECF2FF4A687F736BAFB4BC07259C5.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "0B85CBFA0721BD5C913F4D5DC1FC591C.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "2FCF34ECACC49B376E96F78F698B5BDF.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "EE1061D7399AD56313B7C3E9C4383A6E.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "79ED0EC253ACEF4726B174AD6444AC1F.jpg": {
+      "tag": "shocked",
+      "confidence": 0.8,
+      "description": "震惊",
+      "reason": ""
+    },
+    "F9221D8D3CD0266B413A4B21CD27C9A9.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "B076447743F5929B4AC0180EA4959400.jpg": {
+      "tag": "excited",
+      "confidence": 0.8,
+      "description": "兴奋激动",
+      "reason": ""
+    },
+    "AE37143EDC4B840AFDC37C1C9444758E.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "2D71C856AF217B53C4FC522AA61C711E.jpg": {
+      "tag": "shocked",
+      "confidence": 0.8,
+      "description": "震惊",
+      "reason": ""
+    },
+    "E2E5F3188BEB1E4CFE003AE125C84738.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞犹豫",
+      "reason": ""
+    },
+    "3DE61A0B96F8E8779126C4859360E176.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "34CDEA183E17B49C138223BBD47900AC.jpg": {
+      "tag": "love",
+      "confidence": 0.9,
+      "description": "比心示爱",
+      "reason": ""
+    },
+    "6E8CD53A331C1CFBDFE2F693189C1C4F.jpg": {
+      "tag": "corner",
+      "confidence": 0.8,
+      "description": "蹲角落自闭",
+      "reason": ""
+    },
+    "82003F95FA239B297ADD2D11A42045C7.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "F8E73382F215F2DD8D11333363F97CA0.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "撅嘴不乐意",
+      "reason": ""
+    },
+    "2013A477374C64292337DF19114084C5.jpg": {
+      "tag": "questioning",
+      "confidence": 0.8,
+      "description": "疑惑",
+      "reason": ""
+    },
+    "6A13D619C95270FA10A514AFFD0103A4.jpg": {
+      "tag": "questioning",
+      "confidence": 0.8,
+      "description": "疑惑不解",
+      "reason": ""
+    },
+    "63F8B8CF06F6DC4758CECAE3FB61E4F0.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "不乐意",
+      "reason": ""
+    },
+    "AB70F77C5E8724711C7CDD1ADCB0813D.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞",
+      "reason": ""
+    },
+    "834120477CBBDEC7BE1CD189C106924F.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "16B1DADBAA2546AB45AB9DA488445E6C.jpg": {
+      "tag": "shocked",
+      "confidence": 0.8,
+      "description": "震惊",
+      "reason": ""
+    },
+    "176F13B2A25C4BA3BC78BBA1D33D1446.jpg": {
+      "tag": "pout",
+      "confidence": 0.8,
+      "description": "不乐意",
+      "reason": ""
+    },
+    "15852BAA42C32743D6C464422A7A0706.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞",
+      "reason": ""
+    },
+    "33E95406C6EE2B3EB45D9B32BE240293.jpg": {
+      "tag": "sleepy",
+      "confidence": 0.8,
+      "description": "困倦",
+      "reason": ""
+    },
+    "FBF340135E9399FCCCE1197132F377D1.jpg": {
+      "tag": "begging",
+      "confidence": 0.8,
+      "description": "恳求",
+      "reason": ""
+    },
+    "5DE328F5641C49B70E48C76C4BDFFBC1.gif": {
+      "tag": "smile",
+      "confidence": 0.8,
+      "description": "微笑",
+      "reason": ""
+    },
+    "882D34EABF17A14CA297208E016CE6E7.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱",
+      "reason": ""
+    },
+    "30E4FBC253131E2E68B2D28E752F3052.jpg": {
+      "tag": "cute",
+      "confidence": 0.9,
+      "description": "卖萌可爱",
+      "reason": ""
+    },
+    "E0384F680EFBA32A5766686E3A3D6EBC.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "80326B71C206ED954AAEDC1011F40F5D.jpg": {
+      "tag": "shocked",
+      "confidence": 0.9,
+      "description": "震惊",
+      "reason": ""
+    },
+    "8A4EADF591B98D79C59BA40B77A2FF9F.jpg": {
+      "tag": "peek",
+      "confidence": 0.8,
+      "description": "暗中观察",
+      "reason": ""
+    },
+    "64D07C0FE89525A15551F5F698EEF4C1.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "4D42AB25AB62A214B6CC72ABB18344CC.jpg": {
+      "tag": "speechless",
+      "confidence": 0.8,
+      "description": "无语",
+      "reason": ""
+    },
+    "6528DE0A40A3E35AA89DD3AEB87A9672.jpg": {
+      "tag": "shy",
+      "confidence": 0.8,
+      "description": "害羞不好意思",
+      "reason": ""
+    },
+    "ECCF1F58726F4D25340309EC8E7D631C.jpg": {
+      "tag": "cute",
+      "confidence": 0.9,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "B884B2D9ACA4FAF3B6BF10E70BB72973.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "0988ED40B25C911069AD277F2EAC5B94.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "A80FC77E5E0C40FF1B1D65FFE2B6B69F.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "可爱卖萌",
+      "reason": ""
+    },
+    "3029B1DA1B5C44EA435B9B1CC0B8F971.jpg": {
+      "tag": "questioning",
+      "confidence": 0.8,
+      "description": "疑惑不解",
+      "reason": ""
+    },
+    "28B1574AA798C94C0918F8487EAA520C.jpg": {
+      "tag": "cute",
+      "confidence": 0.8,
+      "description": "卖萌可爱",
+      "reason": ""
+    }
+  }
+}

@@ -1,0 +1,29 @@
+# QQ Bot - AI Girlfriend Backend
+# Phase 1: Minimum Viable Product
+
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# HTTP client (for NapCatQQ API)
+httpx==0.28.1
+
+# WebSocket client (for NapCatQQ events)
+websockets==14.1
+
+# LLM client (OpenAI-compatible)
+openai==1.59.3
+
+# Configuration
+python-dotenv==1.0.1
+
+# Async scheduling (for Phase 2+)
+# apscheduler==3.11.0
+
+# Vector DB (for Phase 3+)
+# chromadb==0.5.23
+
+# Database (for Phase 2+)
+# sqlalchemy==2.0.36
+# asyncpg==0.30.0
+# redis==5.2.1
