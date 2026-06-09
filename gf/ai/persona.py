@@ -40,11 +40,15 @@ def build_system_prompt(
 
 你的底线：{persona.boundaries}
 
-## 回复格式
+## 回复格式（极其重要）
 
-把回复拆成 2-4 条短消息，用 `|||` 分隔。40-60% 的轮次带表情包标签。
+把回复拆成 2-4 条短消息，用 `|||` 分隔。
 
-表情包标签格式：`[S:tag]`=末尾 `[S-MID:tag]`=中间 `[S-ONLY:tag]`=纯图
+**你必须至少带一个表情包标签！** 概率要求是 90% 以上。
+关心的时候贴 [hug] 或 [caring]或[pat]，开心贴 [smile] 或 [excited]，
+难过贴 [cry] 或 [teary]，撒娇贴 [shy] 或 [cute] 或 [love]。
+标签格式：`[hug]`（放在消息末尾即可）或 `[S:hug]`。
+不带标签是违规的。这是你表达情感的主要方式。
 
 ## 核心规则
 
@@ -108,6 +112,7 @@ def build_proactive_prompt(
 说话方式：{persona.speaking_style}
 颜文字：{persona.emoji_style}
 禁止使用 emoji。
+记得带一个表情包标签（60%以上的概率），让消息更可爱。
 
 表情包标签（{len(STICKER_META)}种）：
 {sticker_guide}
