@@ -162,15 +162,16 @@ def _is_command(message: str) -> bool:
            text in ("换人设", "选人设", "切换人设")
 
 
-async def _flush_buffer(user_id: str):
-    """Process all buffered messages for a user."""
+async def _flush_buffer(user_id: str, delay: float):
+    """Wait for buffer timeout, then process all buffered messages."""
     global _message_buffer, _buffer_tasks
+    await asyncio.sleep(delay)
     messages = _message_buffer.pop(user_id, [])
     _buffer_tasks.pop(user_id, None)
     if not messages:
         return
     combined = "\n".join(messages)
-    logger.info(f"Buffer flush for {user_id}: {len(messages)} msgs merged")
+    logger.info(f"Buffer flush for {user_id}: {len(messages)} msgs after {delay:.1f}s → merged")
     await _real_handle_message(user_id, combined)
 
 
@@ -187,7 +188,7 @@ async def handle_private_message(user_id: str, message: str):
             old_task = _buffer_tasks.pop(user_id, None)
             if old_task:
                 old_task.cancel()
-            await _flush_buffer(user_id)
+            await _flush_buffer(user_id, 0)
         # Process command
         await _handle_command_direct(user_id, message)
         return
@@ -204,7 +205,7 @@ async def handle_private_message(user_id: str, message: str):
             old_task = _buffer_tasks.pop(user_id, None)
             if old_task:
                 old_task.cancel()
-            await _flush_buffer(user_id)
+            await _flush_buffer(user_id, 0)
     _last_msg_time[user_id] = now
 
     # Add to buffer
@@ -214,7 +215,7 @@ async def handle_private_message(user_id: str, message: str):
     if user_id in _buffer_tasks:
         _buffer_tasks[user_id].cancel()
     wait = _calc_wait(user_id)
-    _buffer_tasks[user_id] = asyncio.create_task(_flush_buffer(user_id))
+    _buffer_tasks[user_id] = asyncio.create_task(_flush_buffer(user_id, wait))
     logger.debug(f"Buffered msg for {user_id}, flush in {wait:.1f}s")
 
 
