@@ -66,10 +66,11 @@ _message_buffer: dict[str, list[str]] = {}   # user_id -> pending messages
 _buffer_tasks: dict[str, asyncio.Task] = {}  # user_id -> flush timer
 _last_msg_time: dict[str, float] = {}        # user_id -> last message timestamp
 
-MSG_BUFFER_MIN = 2.0   # Minimum wait (fastest typers)
-MSG_BUFFER_MAX = 10.0  # Maximum wait (slowest typers)
-MSG_BUFFER_DEFAULT = 4.0  # Default for new users (covers typical multi-msg gaps)
-MSG_GAP_RESET = 30.0  # Gaps longer than this start a new turn
+MSG_BUFFER_MIN = 2.0    # Absolute minimum wait
+MSG_BUFFER_MAX = 15.0   # Absolute maximum wait
+MSG_BUFFER_DEFAULT = 8.0  # Default for new users
+MSG_GAP_RESET = 300.0   # Gaps >5min reset the session
+MSG_SESSION_WEIGHT = 0.7  # Weight for current session (0.7 = current, 0.3 = history)
 
 
 # ---------------------------------------------------------------------------
@@ -141,17 +142,35 @@ app = FastAPI(
 # ======================================================================
 
 def _calc_wait(user_id: str) -> float:
-    """Calculate adaptive buffer wait time based on user's typing history."""
+    """Adaptive buffer wait: weighted blend of session + historical gaps.
+
+    - Current session gaps (same conversation, <5min apart): weight 70%
+    - Historical average (all time, up to 50): weight 30%
+    - Falls back to MSG_BUFFER_DEFAULT (8s) for new users.
+    """
     global _memory
     if _memory is None:
         return MSG_BUFFER_DEFAULT
-    gaps = _memory.get_user(user_id).preferences.get("msg_gaps", [])
-    if len(gaps) < 3:
+    prefs = _memory.get_user(user_id).preferences
+    session_gaps = prefs.get("msg_session_gaps", [])
+    all_gaps = prefs.get("msg_gaps", [])
+
+    # If no data at all, use default
+    if not all_gaps:
         return MSG_BUFFER_DEFAULT
-    avg = sum(gaps) / len(gaps)
-    var = sum((g - avg) ** 2 for g in gaps) / len(gaps)
-    std = var ** 0.5
-    return min(MSG_BUFFER_MAX, max(MSG_BUFFER_MIN, avg + 1.5 * std))
+
+    # Historical average from all recorded gaps
+    hist_avg = sum(all_gaps) / len(all_gaps)
+
+    # Session average (current conversation)
+    if len(session_gaps) >= 2:
+        sess_avg = sum(session_gaps) / len(session_gaps)
+        wait = MSG_SESSION_WEIGHT * sess_avg + (1 - MSG_SESSION_WEIGHT) * hist_avg
+    else:
+        # Not enough session data, lean on history
+        wait = hist_avg * 1.3  # add 30% buffer since we're unsure
+
+    return min(MSG_BUFFER_MAX, max(MSG_BUFFER_MIN, wait))
 
 
 def _is_command(message: str) -> bool:
@@ -199,13 +218,26 @@ async def handle_private_message(user_id: str, message: str):
     if last_ts and _memory:
         gap = now - last_ts
         if gap < MSG_GAP_RESET:
+            # Same session: record to both session and history
             _memory.record_msg_gap(user_id, gap)
-        elif user_id in _message_buffer:
-            # Long gap: flush old messages before starting new turn
-            old_task = _buffer_tasks.pop(user_id, None)
-            if old_task:
-                old_task.cancel()
-            await _flush_buffer(user_id, 0)
+            # Also track session gaps (reset on long pause)
+            profile = _memory.get_user(user_id)
+            sess = profile.preferences.get("msg_session_gaps", [])
+            sess.append(round(gap, 2))
+            if len(sess) > 10:
+                sess = sess[-10:]
+            profile.preferences["msg_session_gaps"] = sess
+            _memory.save_user(profile)
+        else:
+            # Long gap: reset session, flush old buffer
+            profile = _memory.get_user(user_id)
+            profile.preferences["msg_session_gaps"] = []
+            _memory.save_user(profile)
+            if user_id in _message_buffer:
+                old_task = _buffer_tasks.pop(user_id, None)
+                if old_task:
+                    old_task.cancel()
+                await _flush_buffer(user_id, 0)
     _last_msg_time[user_id] = now
 
     # Add to buffer
