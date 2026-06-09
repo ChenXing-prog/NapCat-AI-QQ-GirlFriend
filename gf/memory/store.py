@@ -240,13 +240,14 @@ class MemoryStore:
     def record_msg_gap(self, user_id: str, gap: float):
         """Record inter-message interval for adaptive buffer timing.
 
-        Only keeps the last 20 gaps to adapt to changing typing patterns.
+        Keeps up to 50 historical gaps for long-term average calculation.
+        Session gaps (stored separately) are used for current-conversation weighting.
         """
         profile = self.get_user(user_id)
         gaps: list[float] = profile.preferences.get("msg_gaps", [])
         gaps.append(round(gap, 2))
-        if len(gaps) > 20:
-            gaps = gaps[-20:]
+        if len(gaps) > 50:
+            gaps = gaps[-50:]
         profile.preferences["msg_gaps"] = gaps
         self.save_user(profile)
 
