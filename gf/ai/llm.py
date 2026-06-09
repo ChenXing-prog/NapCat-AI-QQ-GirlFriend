@@ -142,7 +142,9 @@ class LLMClient:
             # Clean ALL tag formats from text
             part_text = self.STICKER_END_RE.sub("", part_text)
             part_text = self.STICKER_MID_RE.sub("", part_text)
-            part_text = self.PLAIN_TAG_RE.sub("", part_text).strip()
+            part_text = self.PLAIN_TAG_RE.sub("", part_text)
+            # Catch-all: strip any remaining [...] patterns (kaomoji, Chinese, improvised tags)
+            part_text = self._strip_any_brackets(part_text).strip()
 
             if part_text:
                 if end_tag:
@@ -163,6 +165,19 @@ class LLMClient:
     # ------------------------------------------------------------------
     # Tag extraction
     # ------------------------------------------------------------------
+
+    # Catch-all: strip any [...] text (kaomoji, Chinese tags, improvised English)
+    _ANY_BRACKET_RE = re.compile(r"\[[^\]]*\]")
+
+    def _strip_any_brackets(self, text: str) -> str:
+        """Remove all [...] patterns from text.
+
+        Only applied AFTER known sticker tags are extracted,
+        so valid tags like [love] or [S:cute] are processed first.
+        This catches kaomoji like [◍•ᴗ•◍], Chinese like [爱], and
+        made-up tags like [coffee] [poke] that the LLM sometimes generates.
+        """
+        return self._ANY_BRACKET_RE.sub("", text)
 
     def _extract_tag(self, text: str) -> Optional[str]:
         """Extract any sticker tag from text (check all formats)."""
@@ -185,7 +200,8 @@ class LLMClient:
         clean = self.STICKER_END_RE.sub("", raw_text)
         clean = self.STICKER_MID_RE.sub("", clean)
         clean = self.STICKER_ONLY_RE.sub("", clean)
-        clean = self.PLAIN_TAG_RE.sub("", clean).strip()
+        clean = self.PLAIN_TAG_RE.sub("", clean)
+        clean = self._strip_any_brackets(clean).strip()
         return clean, tag
 
     # ------------------------------------------------------------------
