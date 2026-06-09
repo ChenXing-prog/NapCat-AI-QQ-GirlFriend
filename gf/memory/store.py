@@ -204,7 +204,7 @@ class MemoryStore:
     def set_persona(self, user_id: str, persona_id: str):
         """Change the user's selected persona."""
         profile = self.get_user(user_id)
-        valid_personas = {"gentle", "tsundere", "genki", "oneesan", "otaku"}
+        valid_personas = {"gentle", "tsundere", "genki", "oneesan", "otaku", "coder"}
         if persona_id in valid_personas:
             profile.persona_id = persona_id
             self.save_user(profile)

@@ -660,12 +660,13 @@ def _extract_name(text: str) -> Optional[str]:
 
 def _check_persona_command(message: str) -> Optional[str]:
     text = message.strip()
-    m = {"1": "gentle", "2": "tsundere", "3": "genki", "4": "oneesan", "5": "otaku"}
+    m = {"1": "gentle", "2": "tsundere", "3": "genki", "4": "oneesan", "5": "otaku", "6": "coder"}
     if text in m:
         return m[text]
     n = {"温柔女友": "gentle", "温柔": "gentle", "傲娇青梅": "tsundere", "傲娇": "tsundere",
          "元气学妹": "genki", "元气": "genki", "御姐前辈": "oneesan", "御姐": "oneesan",
-         "二次元同好": "otaku", "同好": "otaku", "换人设": None}
+         "二次元同好": "otaku", "同好": "otaku", "码农女友": "coder", "码农": "coder", "程序员": "coder",
+         "换人设": None}
     if text in n:
         return n[text]
     if "换人设" in text or "选人设" in text:
