@@ -66,9 +66,9 @@ _message_buffer: dict[str, list[str]] = {}   # user_id -> pending messages
 _buffer_tasks: dict[str, asyncio.Task] = {}  # user_id -> flush timer
 _last_msg_time: dict[str, float] = {}        # user_id -> last message timestamp
 
-MSG_BUFFER_MIN = 1.5   # Minimum wait (fastest typers)
-MSG_BUFFER_MAX = 8.0   # Maximum wait (slowest typers)
-MSG_BUFFER_DEFAULT = 2.5  # Default for new users
+MSG_BUFFER_MIN = 2.0   # Minimum wait (fastest typers)
+MSG_BUFFER_MAX = 10.0  # Maximum wait (slowest typers)
+MSG_BUFFER_DEFAULT = 4.0  # Default for new users (covers typical multi-msg gaps)
 MSG_GAP_RESET = 30.0  # Gaps longer than this start a new turn
 
 
