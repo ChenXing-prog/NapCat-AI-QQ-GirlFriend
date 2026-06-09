@@ -250,6 +250,11 @@ async def handle_private_message(user_id: str, message: str):
             logger.info(f"Confide mode ON for {user_id}")
         return
 
+    # If in confide mode, just collect messages (no timer, no LLM)
+    if _confide_mode.get(user_id):
+        _message_buffer.setdefault(user_id, []).append(message)
+        return
+
     # Record inter-message gap (for adaptive timing)
     now = time.time()
     last_ts = _last_msg_time.get(user_id)
