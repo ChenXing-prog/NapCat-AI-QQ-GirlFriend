@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
 </p>
 
-<h1 align="center">💕 QQ AI 女友机器人</h1>
+<h1 align="center">二次元 QQ AI 女友聊天机器人</h1>
 <h3 align="center">基于 Kimi 大模型 + NapCatQQ 的智能女友聊天机器人</h3>
 
 <p align="center">
