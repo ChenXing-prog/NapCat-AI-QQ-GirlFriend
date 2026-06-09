@@ -21,6 +21,9 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 class StickerEngine:
     """Selects sticker images based on emotion tags.
 
+    Uses per-category shuffle queues to avoid repeating the same image
+    before cycling through all available images.
+
     Usage:
         engine = StickerEngine(stickers_dir=Path("./stickers"))
         path = engine.pick("shy")           # random shy sticker
@@ -30,11 +33,13 @@ class StickerEngine:
     def __init__(self, stickers_dir: Path):
         self.stickers_dir = Path(stickers_dir)
         self._file_cache: dict[str, list[Path]] = {}
+        self._queues: dict[str, list[str]] = {}  # tag → shuffled filenames
         self.refresh()
 
     def refresh(self):
-        """Rebuild file cache (call after adding/removing stickers)."""
+        """Rebuild file cache and reset shuffle queues."""
         self._file_cache.clear()
+        self._queues.clear()
         if not self.stickers_dir.exists():
             return
         for folder in self.stickers_dir.iterdir():
@@ -45,29 +50,67 @@ class StickerEngine:
                      and f.suffix.lower() in IMAGE_EXTS]
             if files:
                 self._file_cache[folder.name] = sorted(files)
+                # Pre-shuffle for each category
+                self._reshuffle(folder.name)
+
+    def _reshuffle(self, tag: str):
+        """Create a fresh shuffle queue for a category."""
+        files = self._file_cache.get(tag, [])
+        if files:
+            names = [f.name for f in files]
+            random.shuffle(names)
+            self._queues[tag] = names
 
     def pick(self, tag: str, banned: Optional[set] = None) -> Optional[Path]:
-        """Pick a random sticker from a category.
+        """Pick a sticker, preferring ones not recently used.
 
-        Args:
-            tag: Emotion tag (e.g., "shy", "cute")
-            banned: Set of filenames to exclude (user blacklist)
-
-        Returns:
-            Path to image, or None if empty/banned everything.
+        Uses a shuffle queue: cycles through all images in random order
+        before repeating. If a file is banned, skip it.
+        When the queue is exhausted, reshuffle.
         """
         files = self._file_cache.get(tag, [])
         if not files:
             return None
 
-        if banned:
-            available = [f for f in files if f.name not in banned]
-        else:
-            available = list(files)
+        # Refresh queue if empty
+        if not self._queues.get(tag):
+            self._reshuffle(tag)
 
-        if not available:
+        queue = self._queues[tag]
+        attempts = 0
+        while queue and attempts < len(files) * 2:
+            name = queue[0]
+            queue.pop(0)
+            queue.append(name)  # cycle to end
+            attempts += 1
+            if banned and name in banned:
+                continue
+            return self._file_cache[tag][0].parent / name  # reconstruct full path
+
+        return None  # all images exhausted or banned
+
+    def pick_any(self, tags: list[str], banned: Optional[set] = None) -> Optional[Path]:
+        """Pick a random sticker from any of the given categories."""
+        available_tags = [t for t in tags if self._file_cache.get(t)]
+        if not available_tags:
             return None
-        return random.choice(available)
+        tag = random.choice(available_tags)
+        return self.pick(tag, banned=banned)
+
+    def has_images(self, tag: str) -> bool:
+        return len(self._file_cache.get(tag, [])) > 0
+
+    def list_categories(self) -> list[str]:
+        return sorted(self._file_cache.keys())
+
+    def category_counts(self) -> dict[str, int]:
+        return {k: len(v) for k, v in self._file_cache.items()}
+
+    def get_meta(self, tag: str) -> Optional[dict]:
+        meta_file = self.stickers_dir / tag / "meta.json"
+        if meta_file.exists():
+            return json.loads(meta_file.read_text(encoding="utf-8"))
+        return None
 
     def pick_any(self, tags: list[str], banned: Optional[set] = None) -> Optional[Path]:
         """Pick a random sticker from any of the given categories.
