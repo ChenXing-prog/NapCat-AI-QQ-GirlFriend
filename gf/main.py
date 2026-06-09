@@ -61,6 +61,16 @@ _events: Optional[EventExtractor] = None
 # Track last sticker sent to each user (for ban command)
 _last_sticker_sent: dict[str, str] = {}  # user_id -> sticker filename
 
+# Message buffering for adaptive multi-message merging
+_message_buffer: dict[str, list[str]] = {}   # user_id -> pending messages
+_buffer_tasks: dict[str, asyncio.Task] = {}  # user_id -> flush timer
+_last_msg_time: dict[str, float] = {}        # user_id -> last message timestamp
+
+MSG_BUFFER_MIN = 1.5   # Minimum wait (fastest typers)
+MSG_BUFFER_MAX = 8.0   # Maximum wait (slowest typers)
+MSG_BUFFER_DEFAULT = 2.5  # Default for new users
+MSG_GAP_RESET = 30.0  # Gaps longer than this start a new turn
+
 
 # ---------------------------------------------------------------------------
 # Application lifecycle
@@ -126,17 +136,109 @@ app = FastAPI(
 # MESSAGE HANDLER — Phase 3+ pipeline
 # ======================================================================
 
-async def handle_private_message(user_id: str, message: str):
-    """Handle an incoming private QQ message.
+# ======================================================================
+# Adaptive message buffering
+# ======================================================================
 
-    Pipeline:
-    1. Check for commands (persona, sticker ban, admin)
-    2. Load user profile + persona
-    3. Emotion analysis + event extraction
-    4. Build persona-aware prompt
-    5. LLM generates position-aware multi-part reply
-    6. Send text + stickers with natural timing
-    """
+def _calc_wait(user_id: str) -> float:
+    """Calculate adaptive buffer wait time based on user's typing history."""
+    global _memory
+    if _memory is None:
+        return MSG_BUFFER_DEFAULT
+    gaps = _memory.get_user(user_id).preferences.get("msg_gaps", [])
+    if len(gaps) < 3:
+        return MSG_BUFFER_DEFAULT
+    avg = sum(gaps) / len(gaps)
+    var = sum((g - avg) ** 2 for g in gaps) / len(gaps)
+    std = var ** 0.5
+    return min(MSG_BUFFER_MAX, max(MSG_BUFFER_MIN, avg + 1.5 * std))
+
+
+def _is_command(message: str) -> bool:
+    """Check if message is a command that should bypass buffering."""
+    text = message.strip()
+    return _is_ban_command(text) or _is_admin_command(text) or \
+           _check_persona_command(text) is not None or \
+           text in ("换人设", "选人设", "切换人设")
+
+
+async def _flush_buffer(user_id: str):
+    """Process all buffered messages for a user."""
+    global _message_buffer, _buffer_tasks
+    messages = _message_buffer.pop(user_id, [])
+    _buffer_tasks.pop(user_id, None)
+    if not messages:
+        return
+    combined = "\n".join(messages)
+    logger.info(f"Buffer flush for {user_id}: {len(messages)} msgs merged")
+    await _real_handle_message(user_id, combined)
+
+
+async def handle_private_message(user_id: str, message: str):
+    """Entry point for incoming QQ messages. Buffers non-command messages."""
+    global _memory, _message_buffer, _buffer_tasks, _last_msg_time
+
+    cfg = get_config()
+
+    # Commands: process immediately
+    if _is_command(message):
+        # Flush any pending buffer first
+        if user_id in _message_buffer:
+            old_task = _buffer_tasks.pop(user_id, None)
+            if old_task:
+                old_task.cancel()
+            await _flush_buffer(user_id)
+        # Process command
+        await _handle_command_direct(user_id, message)
+        return
+
+    # Record inter-message gap (for adaptive timing)
+    now = time.time()
+    last_ts = _last_msg_time.get(user_id)
+    if last_ts and _memory:
+        gap = now - last_ts
+        if gap < MSG_GAP_RESET:
+            _memory.record_msg_gap(user_id, gap)
+        elif user_id in _message_buffer:
+            # Long gap: flush old messages before starting new turn
+            old_task = _buffer_tasks.pop(user_id, None)
+            if old_task:
+                old_task.cancel()
+            await _flush_buffer(user_id)
+    _last_msg_time[user_id] = now
+
+    # Add to buffer
+    _message_buffer.setdefault(user_id, []).append(message)
+
+    # Reset timer
+    if user_id in _buffer_tasks:
+        _buffer_tasks[user_id].cancel()
+    wait = _calc_wait(user_id)
+    _buffer_tasks[user_id] = asyncio.create_task(_flush_buffer(user_id))
+    logger.debug(f"Buffered msg for {user_id}, flush in {wait:.1f}s")
+
+
+async def _handle_command_direct(user_id: str, message: str):
+    """Process a command immediately (bypasses buffer)."""
+    global _memory, _qq_client, _stickers, _llm
+    cfg = get_config()
+    user = _memory.get_user(user_id)
+
+    if _is_ban_command(message):
+        await _handle_sticker_ban(user_id)
+        return
+    if _check_persona_command(message.strip()) is not None:
+        persona_cmd = _check_persona_command(message.strip())
+        await _handle_persona_selection(user_id, persona_cmd)
+        return
+    is_admin = bool(cfg.admin_qq) and user_id == cfg.admin_qq
+    if is_admin and _is_admin_command(message):
+        await _handle_admin_command(user_id, message)
+        return
+
+
+async def _real_handle_message(user_id: str, message: str):
+    """Actual message processing pipeline (called after buffer flush)."""
     global _llm, _memory, _stickers, _qq_client, _emotion, _events
 
     if _llm is None or _memory is None or _stickers is None or _qq_client is None:
@@ -145,19 +247,6 @@ async def handle_private_message(user_id: str, message: str):
 
     cfg = get_config()
     user = _memory.get_user(user_id)
-
-    # ===== Command detection =====
-
-    # Sticker ban command
-    if _is_ban_command(message):
-        await _handle_sticker_ban(user_id)
-        return
-
-    # Admin sticker management
-    is_admin = bool(cfg.admin_qq) and user_id == cfg.admin_qq
-    if is_admin and _is_admin_command(message):
-        await _handle_admin_command(user_id, message)
-        return
 
     # ===== Onboarding =====
     if not user.name and not _is_greeting(message):
@@ -173,12 +262,6 @@ async def handle_private_message(user_id: str, message: str):
             )
             _memory.add_message(user_id, "assistant", "询问称呼")
             return
-
-    # Persona selection command
-    persona_cmd = _check_persona_command(message)
-    if persona_cmd:
-        await _handle_persona_selection(user_id, persona_cmd)
-        return
 
     # ===== Load persona =====
     persona = get_persona(user.persona_id)

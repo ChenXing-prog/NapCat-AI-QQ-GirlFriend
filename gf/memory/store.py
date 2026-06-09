@@ -233,6 +233,23 @@ class MemoryStore:
         profile = self.get_user(user_id)
         return set(profile.banned_stickers)
 
+    # ------------------------------------------------------------------
+    # Adaptive message gap tracking
+    # ------------------------------------------------------------------
+
+    def record_msg_gap(self, user_id: str, gap: float):
+        """Record inter-message interval for adaptive buffer timing.
+
+        Only keeps the last 20 gaps to adapt to changing typing patterns.
+        """
+        profile = self.get_user(user_id)
+        gaps: list[float] = profile.preferences.get("msg_gaps", [])
+        gaps.append(round(gap, 2))
+        if len(gaps) > 20:
+            gaps = gaps[-20:]
+        profile.preferences["msg_gaps"] = gaps
+        self.save_user(profile)
+
     def update_name(self, user_id: str, name: str):
         """Update the user's preferred name."""
         profile = self.get_user(user_id)
