@@ -61,33 +61,43 @@ class StickerEngine:
             random.shuffle(names)
             self._queues[tag] = names
 
+    # Fallback: if requested tag has no images, try similar ones
+    _FALLBACK = {
+        "pat": ["hug", "cute", "shy"], "caring": ["hug", "love", "smile"],
+        "love": ["hug", "shy", "smile"], "hug": ["love", "cute", "shy"],
+        "laugh": ["smile", "excited", "smirk"], "satisfied": ["smile", "smirk", "sleepy"],
+        "heartbroken": ["cry", "teary", "corner"], "rage": ["pout", "speechless"],
+        "panic": ["shocked", "speechless", "questioning"], "proud": ["smirk", "star_eyes", "excited"],
+        "sigh": ["speechless", "corner", "sleepy"],
+    }
+
     def pick(self, tag: str, banned: Optional[set] = None) -> Optional[Path]:
-        """Pick a sticker, preferring ones not recently used.
-
-        Uses a shuffle queue: cycles through all images in random order
-        before repeating. If a file is banned, skip it.
-        When the queue is exhausted, reshuffle.
-        """
+        """Pick a sticker. Falls back to similar tags if category is empty."""
         files = self._file_cache.get(tag, [])
-        if not files:
-            return None
+        if files:
+            return self._pick_one(tag, files, banned)
+        # Fallback to similar tags
+        for fb in self._FALLBACK.get(tag, []):
+            fb_files = self._file_cache.get(fb, [])
+            if fb_files:
+                return self._pick_one(fb, fb_files, banned)
+        return None
 
-        # Refresh queue if empty
+    def _pick_one(self, tag, files, banned):
+        """Select one file from a category using shuffle queue."""
         if not self._queues.get(tag):
             self._reshuffle(tag)
-
         queue = self._queues[tag]
         attempts = 0
         while queue and attempts < len(files) * 2:
             name = queue[0]
             queue.pop(0)
-            queue.append(name)  # cycle to end
+            queue.append(name)
             attempts += 1
             if banned and name in banned:
                 continue
-            return self._file_cache[tag][0].parent / name  # reconstruct full path
-
-        return None  # all images exhausted or banned
+            return files[0].parent / name
+        return None
 
     def pick_any(self, tags: list[str], banned: Optional[set] = None) -> Optional[Path]:
         """Pick a random sticker from any of the given categories."""
