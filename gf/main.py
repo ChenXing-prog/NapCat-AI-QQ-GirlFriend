@@ -66,11 +66,12 @@ _message_buffer: dict[str, list[str]] = {}   # user_id -> pending messages
 _buffer_tasks: dict[str, asyncio.Task] = {}  # user_id -> flush timer
 _last_msg_time: dict[str, float] = {}        # user_id -> last message timestamp
 
-MSG_BUFFER_MIN = 2.0    # Absolute minimum wait
-MSG_BUFFER_MAX = 15.0   # Absolute maximum wait
+MSG_BUFFER_MIN = 3.0    # Absolute minimum wait
+MSG_BUFFER_MAX = 20.0   # Absolute maximum wait
 MSG_BUFFER_DEFAULT = 8.0  # Default for new users
 MSG_GAP_RESET = 300.0   # Gaps >5min reset the session
 MSG_SESSION_WEIGHT = 0.7  # Weight for current session (0.7 = current, 0.3 = history)
+MSG_BUFFER_MULTIPLIER = 1.5  # Multiply calculated gap to leave margin
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +173,10 @@ def _calc_wait(user_id: str) -> float:
     if sess_avg is not None:
         wait = MSG_SESSION_WEIGHT * sess_avg + (1 - MSG_SESSION_WEIGHT) * hist_avg
     else:
-        wait = hist_avg * 1.5  # No session data yet, buffer history by 50%
+        wait = hist_avg  # No session data yet, use history
+
+    # Add buffer margin — wait 1.5x longer than typical gap to avoid cutting user off
+    wait = wait * MSG_BUFFER_MULTIPLIER
 
     return min(MSG_BUFFER_MAX, max(MSG_BUFFER_MIN, wait))
 
