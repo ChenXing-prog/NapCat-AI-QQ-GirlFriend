@@ -68,10 +68,13 @@ _last_msg_time: dict[str, float] = {}        # user_id -> last message timestamp
 
 MSG_BUFFER_MIN = 3.0    # Absolute minimum wait
 MSG_BUFFER_MAX = 20.0   # Absolute maximum wait
-MSG_BUFFER_DEFAULT = 8.0  # Default for new users
+MSG_BUFFER_DEFAULT = 10.0  # Default for new users
 MSG_GAP_RESET = 300.0   # Gaps >5min reset the session
 MSG_SESSION_WEIGHT = 0.7  # Weight for current session (0.7 = current, 0.3 = history)
 MSG_BUFFER_MULTIPLIER = 1.5  # Multiply calculated gap to leave margin
+
+# Confide mode: user sends standalone "/" to delimit multi-message blocks
+_confide_mode: dict[str, bool] = {}  # user_id -> True if in confide mode
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +187,8 @@ def _calc_wait(user_id: str) -> float:
 def _is_command(message: str) -> bool:
     """Check if message is a command that should bypass buffering."""
     text = message.strip()
+    if text == "/":
+        return False  # confide delimiter, not a command
     return _is_ban_command(text) or _is_admin_command(text) or \
            _check_persona_command(text) is not None or \
            text in ("换人设", "选人设", "切换人设")
@@ -210,14 +215,39 @@ async def handle_private_message(user_id: str, message: str):
 
     # Commands: process immediately
     if _is_command(message):
-        # Flush any pending buffer first
         if user_id in _message_buffer:
             old_task = _buffer_tasks.pop(user_id, None)
             if old_task:
                 old_task.cancel()
             await _flush_buffer(user_id, 0)
-        # Process command
         await _handle_command_direct(user_id, message)
+        return
+
+    # Confide mode: standalone "/" is a delimiter, not content
+    if message.strip() == "/":
+        if _confide_mode.get(user_id):
+            # Second "/" → end confide mode, flush all collected messages
+            _confide_mode[user_id] = False
+            if user_id in _buffer_tasks:
+                _buffer_tasks[user_id].cancel()
+                _buffer_tasks.pop(user_id, None)
+            combined = "\n".join(_message_buffer.pop(user_id, []))
+            _message_buffer.pop(user_id, None)  # cleanup
+            if combined.strip():
+                logger.info(f"Confide flush for {user_id}: {combined[:80]}...")
+                await _real_handle_message(user_id, f"[倾诉内容]\n{combined}")
+            else:
+                await _qq_client.send_private_msg(user_id, "嗯？你还没说什么呢(｡･ω･｡)")
+            _last_msg_time.pop(user_id, None)
+        else:
+            # First "/" → enter confide mode, clear any existing buffer
+            _confide_mode[user_id] = True
+            if user_id in _buffer_tasks:
+                _buffer_tasks[user_id].cancel()
+                _buffer_tasks.pop(user_id, None)
+            _message_buffer[user_id] = []  # fresh buffer
+            _last_msg_time.pop(user_id, None)
+            logger.info(f"Confide mode ON for {user_id}")
         return
 
     # Record inter-message gap (for adaptive timing)
