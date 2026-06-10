@@ -251,9 +251,9 @@ flowchart LR
 
 ---
 ## 示例截图
-<img width="338" height="757" alt="image" src="https://github.com/user-attachments/assets/9e751747-7c3c-48cc-bb54-e5b460fd1f13" />
-<img width="261" height="753" alt="image" src="https://github.com/user-attachments/assets/8f7738d5-5ec1-461f-9b23-d794874347c0" />
-<img width="415" height="753" alt="image" src="https://github.com/user-attachments/assets/d215ba9a-97c1-4748-b87b-e4eb31f739a0" />
+- <img width="338" height="757" alt="image" src="https://github.com/user-attachments/assets/9e751747-7c3c-48cc-bb54-e5b460fd1f13" />
+- <img width="261" height="753" alt="image" src="https://github.com/user-attachments/assets/8f7738d5-5ec1-461f-9b23-d794874347c0" />
+- <img width="415" height="753" alt="image" src="https://github.com/user-attachments/assets/d215ba9a-97c1-4748-b87b-e4eb31f739a0" />
 
 ---
 
