@@ -200,7 +200,10 @@ async def _real_handle_message(user_id: str, message: str):
     event_ctx = build_followup_context(reminders) if reminders else ""
     # Prompt + LLM
     prompt = build_system_prompt(cfg.bot.bot_name, user.name or "主人", persona=persona, emotion_context=emotion_ctx, event_context=event_ctx)
-    llm_msgs = [LLMClient.system_message(prompt), LLMClient.system_message(f"[{time.strftime('%Y年%m月%d日 %H:%M')}] [关系:{user.relationship}] [聊了{user.total_messages}条]")]
+    weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
+    now = time.localtime()
+    time_note = f"[{time.strftime('%Y年%m月%d日', now)} {weekdays[now.tm_wday]} {time.strftime('%H:%M', now)}]"
+    llm_msgs = [LLMClient.system_message(prompt), LLMClient.system_message(f"{time_note} [关系:{user.relationship}] [聊了{user.total_messages}条]")]
     for m in _memory.get_recent_messages(user_id): llm_msgs.append({"role": m["role"], "content": m["content"]})
     llm_msgs.append(LLMClient.user_message(message))
     try:

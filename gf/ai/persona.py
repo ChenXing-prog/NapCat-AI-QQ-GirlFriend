@@ -95,10 +95,13 @@ def build_proactive_prompt(
     events_text: str = "", emotion_context: str = "",
 ) -> str:
     """Build system prompt for proactive check-ins."""
+    from datetime import datetime
+    weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
+    today_str = datetime.now().strftime(f"%m月%d日 {weekdays[datetime.now().weekday()]}")
     guidance = {
-        "morning": f"早上好，该找{user_name}了。" + persona.proactive_style,
-        "evening": f"晚上了，可以跟{user_name}说说话。" + persona.proactive_style,
-        "silence": f"{user_name}有段时间没说话了。" + persona.proactive_style,
+        "morning": f"现在是{today_str}的早上，该给{user_name}发早安了。" + persona.proactive_style,
+        "evening": f"现在是{today_str}的晚上，该给{user_name}发晚安了。" + persona.proactive_style,
+        "silence": f"{user_name}有段时间没说话了。今天是{today_str}。" + persona.proactive_style,
     }.get(trigger_type, persona.proactive_style)
 
     sticker_guide = _build_weighted_guide(persona)
