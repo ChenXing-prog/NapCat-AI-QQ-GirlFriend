@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge">
 </p>
 
-<h1 align="center">二次元 AI 女友</h1>
+<h1 align="center">二次元 AI 女友 机器人</h1>
 <h3 align="center">基于 Kimi k2.6 + NapCatQQ v4，会发表情包的二次元女友 QQ 机器人</h3>
 
 <p align="center">
