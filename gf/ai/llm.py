@@ -84,6 +84,7 @@ class LLMClient:
             messages=messages,
             max_tokens=self.config.max_tokens,
             temperature=self.config.temperature,
+            tools=[{"type": "web_search"}],
         )
         raw_text = response.choices[0].message.content or ""
         text, tag = self._clean_response(raw_text)
@@ -101,6 +102,7 @@ class LLMClient:
             messages=messages,
             max_tokens=self.config.max_tokens,
             temperature=self.config.temperature,
+            tools=[{"type": "web_search"}],
         )
         raw_text = response.choices[0].message.content or ""
 
