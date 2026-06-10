@@ -1,9 +1,7 @@
-"""Long-term memory — fact extraction and conversation summarization.
-
-Runs asynchronously in background to avoid blocking the chat pipeline.
-"""
+"""Long-term memory — fact extraction, summarization, emotion logging, shared moments."""
 
 import logging
+import random
 from .llm import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -122,3 +120,77 @@ class MemoryManager:
         except Exception as e:
             logger.debug(f"Summarization skipped: {e}")
             return None
+
+    # ------------------------------------------------------------------
+    # Emotion logging (daily)
+    # ------------------------------------------------------------------
+
+    async def log_daily_emotion(self, user_id: str, recent_messages: list[dict],
+                                emotion_engine) -> None:
+        """Summarize today's emotional trajectory and store it."""
+        from datetime import date
+        today = date.today().isoformat()
+        user_msgs = [m["content"] for m in recent_messages[-50:] if m["role"] == "user"]
+        if not user_msgs:
+            return
+        try:
+            combined = "\n".join(msg[:120] for msg in user_msgs[-20:])
+            msgs = [
+                LLMClient.system_message("总结用户今天的整体情绪。只输出JSON：{\"dominant\":\"happy|sad|anxious|excited|tired|neutral\",\"note\":\"一句话总结（15字内）\"}"),
+                LLMClient.user_message(combined[:2000]),
+            ]
+            reply, _ = await self._llm.chat(msgs)
+            import json
+            if "```" in reply:
+                reply = reply.split("```")[1].split("```")[0]
+            data = json.loads(reply.strip())
+            # Get emotion intensity from engine if available
+            traj = emotion_engine.get_trajectory(user_id) if emotion_engine else None
+            intensity = traj.mood_stability if traj else 0.5
+            dominant = data.get("dominant", "neutral")
+            note = data.get("note", "")
+            from ..memory.store import MemoryStore
+            # Will be called from main where _memory is available
+            logger.info(f"Emotion log [{today}]: {dominant} — {note}")
+            return {"dominant": dominant, "intensity": intensity, "note": note, "msg_count": len(user_msgs)}
+        except Exception as e:
+            logger.debug(f"Emotion log skipped: {e}")
+            return None
+
+    # ------------------------------------------------------------------
+    # Shared moments extraction
+    # ------------------------------------------------------------------
+
+    async def extract_moments(self, user_id: str, recent_messages: list[dict],
+                               total_msgs: int) -> list[dict]:
+        """Scan today's conversation for memorable shared moments."""
+        conversation = "\n".join(
+            f"{'👤' if m['role'] == 'user' else '🤖'}: {m['content'][:100]}"
+            for m in recent_messages[-40:]
+        )
+        # Milestone auto-detection
+        milestones = []
+        if total_msgs in (100, 200, 500, 1000, 2000):
+            milestones.append({
+                "type": "milestone", "content": f"我们聊到了第{total_msgs}条消息！",
+                "importance": 9 if total_msgs >= 500 else 7,
+            })
+        try:
+            msgs = [
+                LLMClient.system_message("扫描对话，提取值得记住的'我们之间的瞬间'。比如：深夜聊天、一起吐槽、对方倾诉了心事、共同喜欢的东西。只输出JSON：{\"moments\":[{\"content\":\"...\",\"importance\":1-10}]}。没有就输出空列表。"),
+                LLMClient.user_message(conversation[:3000]),
+            ]
+            reply, _ = await self._llm.chat(msgs)
+            import json
+            if "```" in reply:
+                reply = reply.split("```")[1].split("```")[0]
+            data = json.loads(reply.strip())
+            for m in data.get("moments", []):
+                milestones.append({
+                    "type": m.get("type", "memorable"),
+                    "content": m["content"],
+                    "importance": m.get("importance", 5),
+                })
+        except Exception as e:
+            logger.debug(f"Moment extraction skipped: {e}")
+        return milestones

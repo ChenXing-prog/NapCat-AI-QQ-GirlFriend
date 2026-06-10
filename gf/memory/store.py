@@ -42,6 +42,8 @@ class UserProfile:
     # Long-term memory
     core_facts: list[dict] = field(default_factory=list)  # [{category, content, importance, created_at, last_accessed, access_count}]
     summaries: list[dict] = field(default_factory=list)    # [{date_range, summary, key_topics, message_count, created_at}]
+    emotion_log: list[dict] = field(default_factory=list)  # [{date, dominant, intensity, note, msg_count}]
+    shared_moments: list[dict] = field(default_factory=list)  # [{type, content, created_at, importance, recalled_count}]
     # Relationship stage: "new" | "familiar" | "close"
     relationship: str = "new"
     # Chat statistics
@@ -235,6 +237,79 @@ class MemoryStore:
         """Get the user's banned sticker filenames as a set."""
         profile = self.get_user(user_id)
         return set(profile.banned_stickers)
+
+    # ------------------------------------------------------------------
+    # Emotion trajectory
+    # ------------------------------------------------------------------
+
+    def log_emotion(self, user_id: str, dominant: str, intensity: float, note: str, msg_count: int):
+        """Record daily emotional summary."""
+        from datetime import date
+        today = date.today().isoformat()
+        profile = self.get_user(user_id)
+        # Update today's entry if exists, else append
+        for e in profile.emotion_log:
+            if e.get("date") == today:
+                e["dominant"] = dominant
+                e["intensity"] = intensity
+                e["note"] = note
+                e["msg_count"] = msg_count
+                self.save_user(profile)
+                return
+        profile.emotion_log.append({
+            "date": today, "dominant": dominant,
+            "intensity": intensity, "note": note, "msg_count": msg_count,
+        })
+        if len(profile.emotion_log) > 30:
+            profile.emotion_log = profile.emotion_log[-30:]
+        self.save_user(profile)
+
+    def get_emotion_trajectory(self, user_id: str, days: int = 7) -> list[dict]:
+        """Get recent emotion history for context injection."""
+        profile = self.get_user(user_id)
+        return profile.emotion_log[-days:]
+
+    # ------------------------------------------------------------------
+    # Shared moments
+    # ------------------------------------------------------------------
+
+    def add_moment(self, user_id: str, moment_type: str, content: str, importance: int = 5):
+        """Record a shared moment (milestone, late night, confide, etc)."""
+        profile = self.get_user(user_id)
+        # Avoid duplicates within 3 days
+        import time
+        now = time.time()
+        for m in profile.shared_moments[-10:]:
+            if m["content"] == content and (now - m["created_at"]) < 259200:
+                return
+        profile.shared_moments.append({
+            "type": moment_type, "content": content,
+            "created_at": now, "importance": importance, "recalled_count": 0,
+        })
+        if len(profile.shared_moments) > 50:
+            profile.shared_moments = profile.shared_moments[-50:]
+        self.save_user(profile)
+
+    def get_random_moment(self, user_id: str) -> dict | None:
+        """Get a mostly-unrecalled moment for natural reference."""
+        import random
+        profile = self.get_user(user_id)
+        if not profile.shared_moments:
+            return None
+        # Prefer low recall count, higher importance
+        candidates = [m for m in profile.shared_moments if m.get("recalled_count", 0) < 2]
+        if not candidates:
+            return None
+        weights = [m.get("importance", 5) for m in candidates]
+        chosen = random.choices(candidates, weights=weights, k=1)[0]
+        chosen["recalled_count"] = chosen.get("recalled_count", 0) + 1
+        self.save_user(profile)
+        return chosen
+
+    def get_milestone_moments(self, user_id: str) -> list[dict]:
+        """Get milestone-type moments (for relationship summary)."""
+        profile = self.get_user(user_id)
+        return [m for m in profile.shared_moments if m.get("type") == "milestone"]
 
     # ------------------------------------------------------------------
     # Adaptive message gap tracking

@@ -224,6 +224,18 @@ async def _real_handle_message(user_id: str, message: str):
     if summaries:
         sum_text = "最近的对话概要：\n" + "\n".join(f"- [{s['date_range']}] {s['summary']}" for s in summaries)
         llm_msgs.append(LLMClient.system_message(sum_text))
+    # Emotion trajectory (last 7 days)
+    emotions = _memory.get_emotion_trajectory(user_id, 7)
+    if len(emotions) >= 2:
+        trend = "在好转" if emotions[-1].get("dominant","") not in ("sad","anxious","angry") else "需要注意"
+        emo_text = "最近心情：" + " → ".join(f"{e['date'][-5:]}({e.get('note','')})" for e in emotions) + f"，整体{trend}"
+        llm_msgs.append(LLMClient.system_message(emo_text))
+    # Shared moment (20% chance, natural recall)
+    if random.random() < 0.2:
+        moment = _memory.get_random_moment(user_id)
+        if moment:
+            llm_msgs.append(LLMClient.system_message(
+                f"[可以自然地提起：{moment['content']}。不要刻意，顺势说一下就好。]"))
     weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
     now = time.localtime()
     time_note = f"[{time.strftime('%Y年%m月%d日', now)} {weekdays[now.tm_wday]} {time.strftime('%H:%M', now)}]"
@@ -273,8 +285,8 @@ def _extract_name(text):
     return None
 
 async def _run_memory_tasks(user_id: str):
-    """Background: extract facts and summarize conversations."""
-    global _memory, _mem_mgr
+    """Background: extract facts, summarize, log emotions, capture moments."""
+    global _memory, _mem_mgr, _emotion
     if not _memory or not _mem_mgr:
         return
     try:
@@ -289,6 +301,15 @@ async def _run_memory_tasks(user_id: str):
             date_range = f"msg{start}-{total_msgs}"
             _memory.add_summary(user_id, date_range, summary["summary"],
                                summary.get("key_topics", []), len(recent))
+        # Daily emotion log + shared moments (once per N messages)
+        total = _memory.get_user(user_id).total_messages
+        if total % 15 == 0:
+            emo = await _mem_mgr.log_daily_emotion(user_id, recent, _emotion)
+            if emo:
+                _memory.log_emotion(user_id, emo["dominant"], emo["intensity"], emo["note"], emo["msg_count"])
+            moments = await _mem_mgr.extract_moments(user_id, recent, total)
+            for m in moments:
+                _memory.add_moment(user_id, m.get("type", "memorable"), m["content"], m.get("importance", 5))
     except Exception as e:
         logger.debug(f"Memory tasks skipped: {e}")
 
