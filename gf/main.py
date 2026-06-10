@@ -297,8 +297,7 @@ async def _real_handle_message(user_id: str, message: str):
         time_str = time.strftime("%m月%d日", time.localtime(ts)) if ts else ""
         llm_msgs.append(LLMClient.system_message(
             f"[可以自然地提起一段回忆：{time_str}，他说\"{a['content'][:100]}\"。用你自己的话转述，不要原样照搬。]"))
-        a["recalled_count"] = a.get("recalled_count", 0) + 1
-        _memory.save_user(_memory.get_user(user_id))
+        _memory.bump_archive_recall(user_id, a["content"])
     weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
     now = time.localtime()
     time_note = f"[{time.strftime('%Y年%m月%d日', now)} {weekdays[now.tm_wday]} {time.strftime('%H:%M', now)}]"

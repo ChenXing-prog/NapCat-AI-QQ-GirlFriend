@@ -44,7 +44,6 @@ class UserProfile:
     summaries: list[dict] = field(default_factory=list)    # [{date_range, summary, key_topics, message_count, high_importance, ...}]
     emotion_log: list[dict] = field(default_factory=list)  # [{date, dominant, intensity, note, msg_count}]
     shared_moments: list[dict] = field(default_factory=list)  # [{type, content, created_at, importance, recalled_count}]
-    core_archive: list[dict] = field(default_factory=list)  # [{content, context, emotion, importance, recalled_count, created_at}]
     # Relationship stage: "new" | "familiar" | "close"
     relationship: str = "new"
     # Chat statistics
@@ -313,7 +312,7 @@ class MemoryStore:
         return [m for m in profile.shared_moments if m.get("type") == "milestone"]
 
     # ------------------------------------------------------------------
-    # Core archive — permanent memory vault
+    # Core archive — permanent memory vault (JSONL, per-user, attenuation)
     # ------------------------------------------------------------------
 
     _EMO_GROUPS = {
@@ -321,45 +320,55 @@ class MemoryStore:
         "intimate": "warm", "warm": "warm", "grateful": "warm", "happy": "warm",
     }
 
+    def _archive_path(self, user_id: str) -> Path:
+        safe = "".join(c for c in user_id if c.isalnum() or c in "-_")
+        return self.users_dir / f"{safe}_archive.jsonl"
+
     def add_archive(self, user_id: str, content: str, context: str = "",
                     emotion: str = "neutral", importance: int = 8):
-        """Add an entry to the permanent memory archive."""
-        profile = self.get_user(user_id)
-        now = time.time()
-        # Dedup: same content updates importance
-        for a in profile.core_archive:
-            if a["content"] == content:
-                a["importance"] = max(a.get("importance", 5), importance)
-                a["recalled_count"] = a.get("recalled_count", 0) + 0  # don't bump on dedup
-                self.save_user(profile)
-                return
-        profile.core_archive.append({
+        """Append to per-user archive.jsonl. No capacity limit."""
+        entry = {
             "content": content,
             "context": context,
             "emotion": emotion,
             "importance": importance,
             "recalled_count": 0,
-            "created_at": now,
-        })
-        # Capacity control
-        if len(profile.core_archive) > 100:
-            keep = [a for a in profile.core_archive if a.get("importance", 5) >= 9]
-            recent = profile.core_archive[-20:]
-            rest = [a for a in profile.core_archive if a not in keep and a not in recent]
-            rest.sort(key=lambda x: x.get("importance", 5), reverse=True)
-            profile.core_archive = keep + recent + rest[:max(0, 100 - len(keep) - len(recent))]
-        self.save_user(profile)
+            "created_at": time.time(),
+        }
+        import json
+        path = self._archive_path(user_id)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    def _attenuate(self, recalled_count: int, importance: int, created_at: float) -> float:
+        """Calculate attenuation. Higher = more retrievable.
+        - importance≥9: decays very slowly (years)
+        - importance≥7: decays over months
+        - importance<7: decays over weeks
+        - recalled_count resets the curve
+        """
+        months = (time.time() - created_at) / 2592000
+        base = importance / 10.0
+        decay = 1.0 / (1.0 + months * (1.0 - base))
+        recall_bonus = 1.0 + min(recalled_count, 10) * 0.15  # up to +150%
+        return base * decay * recall_bonus
 
     def search_archive(self, user_id: str, query: str = "", emotion_group: str = "",
                        limit: int = 1) -> list[dict]:
-        """Search archive by keyword and/or emotion group. Skips over-recalled entries."""
-        profile = self.get_user(user_id)
+        """Search archive with attenuation filter. Only scans last 500 entries."""
+        import json, random
+        path = self._archive_path(user_id)
+        if not path.exists():
+            return []
         candidates = []
-        for a in profile.core_archive:
-            if a.get("recalled_count", 0) >= 5:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()[-500:]
+        for line in lines:
+            a = json.loads(line)
+            imp = a.get("importance", 5)
+            # Skip low-importance entries for keyword search
+            if query and imp < 7:
                 continue
-            if importance := a.get("importance", 5) < 8 and query:
-                continue  # keyword search only for important memories
             match = True
             if query:
                 match = query in a.get("content", "") or query in a.get("context", "")
@@ -368,15 +377,32 @@ class MemoryStore:
                 if self._EMO_GROUPS.get(emo) != emotion_group:
                     match = False
             if match:
-                candidates.append(a)
-        candidates.sort(key=lambda x: x.get("importance", 5), reverse=True)
-        import random
-        return random.sample(candidates, min(limit, len(candidates))) if candidates else []
+                score = self._attenuate(a.get("recalled_count", 0), imp, a.get("created_at", time.time()))
+                if score > 0.3:  # Below threshold = functionally forgotten
+                    candidates.append((score, a))
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        return [a for _, a in candidates[:limit]] if candidates else []
 
     def get_archive_by_emotion(self, user_id: str, emotion: str, limit: int = 1) -> list[dict]:
         """Get archive entries matching an emotion group."""
         group = self._EMO_GROUPS.get(emotion)
         return self.search_archive(user_id, emotion_group=group, limit=limit) if group else []
+
+    def bump_archive_recall(self, user_id: str, content: str):
+        """Increment recalled_count for an archive entry (resets decay curve)."""
+        import json
+        path = self._archive_path(user_id)
+        if not path.exists():
+            return
+        lines = []
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        with open(path, "w", encoding="utf-8") as f:
+            for line in lines:
+                a = json.loads(line)
+                if a.get("content") == content:
+                    a["recalled_count"] = a.get("recalled_count", 0) + 1
+                f.write(json.dumps(a, ensure_ascii=False) + "\n")
 
     # ------------------------------------------------------------------
     # Adaptive message gap tracking
