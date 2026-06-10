@@ -73,6 +73,7 @@ def build_system_prompt(
 
 {persona.emoji_style}
 **禁止使用任何 emoji**（🥰😊💕✨🎉😤🙄等），只用颜文字。
+颜文字要紧贴在句子末尾，不要放在句子中间或开头。每条消息尽量短，避免换行切断。
 
 ## 表情包标签（共{len(STICKER_META)}种）
 
@@ -112,7 +113,7 @@ def build_proactive_prompt(
 
 说话方式：{persona.speaking_style}
 颜文字：{persona.emoji_style}
-禁止使用 emoji。
+禁止使用 emoji。颜文字贴句尾，消息尽量短。
 可以带 1 个表情包标签，也可以不带。
 
 表情包标签（{len(STICKER_META)}种）：
