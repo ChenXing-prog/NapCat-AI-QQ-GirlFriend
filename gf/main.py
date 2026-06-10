@@ -24,6 +24,7 @@ from .ai.emotion import EmotionEngine
 from .ai.events import EventExtractor, build_followup_context
 from .ai.memory import MemoryManager
 from .ai.search import maybe_search
+from .ai.vision import is_image_message, extract_image_urls, describe_image
 from .memory.store import MemoryStore
 from .stickers.engine import StickerEngine
 from .bot.client import QQClient
@@ -89,6 +90,25 @@ app = FastAPI(title="AI Girlfriend QQ Bot", version="0.3.0", lifespan=lifespan)
 async def handle_private_message(user_id: str, message: str):
     """Route incoming QQ messages: commands → immediate, confide → collect, chat → buffer."""
     cfg = get_config()
+
+    # Image detection — convert to text description before processing
+    if is_image_message(message):
+        urls = extract_image_urls(message)
+        if urls:
+            descriptions = []
+            for url in urls[:3]:  # max 3 images at once
+                desc = await describe_image(url)
+                if desc:
+                    descriptions.append(desc)
+            if descriptions:
+                image_text = "用户发了几张图片：" + "；".join(descriptions)
+                handle_incoming(user_id, image_text, _memory, _real_handle_message)
+                return
+            else:
+                # All downloads failed, fall through to text
+                message = "用户发了一张图片（暂时无法识别）"
+        else:
+            message = "用户发了一张图片（暂时无法识别）"
 
     # Commands
     if is_any_command(message):
