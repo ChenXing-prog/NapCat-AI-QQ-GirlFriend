@@ -10,7 +10,7 @@
 <h3 align="center">基于 Kimi k2.6 + NapCatQQ v4，会发表情包的二次元女友 QQ 机器人</h3>
 
 <p align="center">
-  <b>🎭 6 种人设 · 🖼️ 30 分类表情包 · 🧠 三层记忆 · 💬 自适应聊天 · 🔥 反迎合人格</b>
+  <b>🎭 6 种人设 · 🖼️ 30 分类表情包 · 🧠 六层记忆 · 💬 自适应聊天 · 🔥 反迎合人格</b>
 </p>
 
 ---
@@ -195,8 +195,8 @@ flowchart TD
 ### 1. 准备
 
 ```bash
-git clone https://github.com/ChenXing-prog/NapCat-AI-QQ-.git
-cd NapCat-AI-QQ-/gf
+git clone https://github.com/ChenXing-prog/NapCat-AI-QQ-Girlfriend.git
+cd NapCat-AI-QQ-Girlfriend/gf
 cp .env.example .env   # 填 Kimi API Key + QQ号
 pip install -r requirements.txt
 ```
@@ -227,15 +227,15 @@ python -m gf.main
 
 ```
 ├── gf/                          # 后端
-│   ├── main.py                  # 主入口（350 行，协调层）
-│   ├── handlers/                # 命令处理 + 缓冲逻辑（OCP 拆分）
-│   ├── ai/                      # LLM、人设、情绪、记忆、事件
-│   ├── bot/                     # NapCatQQ 适配器 + HTTP 客户端
-│   ├── memory/                  # JSON 用户存储（含三层记忆）
+│   ├── main.py                  # 主入口（协调层）
+│   ├── handlers/                # 命令处理 + 自适应缓冲（OCP 拆分）
+│   ├── ai/                      # LLM · 六层记忆 · 情绪 · 人设 · 事件 · 联网搜索
+│   ├── bot/                     # NapCatQQ v4 适配器 + HTTP 客户端
+│   ├── memory/                  # JSON 用户存储
 │   └── stickers/                # 表情包引擎（洗牌+降级+别名+清理）
 ├── stickers/                    # 30 个分类文件夹，146 张图
-├── scripts/                     # 表情包分类/管理脚本
-└── docs/                        # 详细需求文档
+├── scripts/                     # Kimi Vision 表情包分类/管理
+└── docs/                        # 项目详解 · 宣传介绍 · 分类需求
 ```
 
 ---
