@@ -149,7 +149,7 @@ async def _handle_confide_reply(user_id: str, combined: str):
         parts, _ = await _llm.chat_multi([
             LLMClient.system_message(prompt),
             LLMClient.user_message(combined),
-        ])
+        ], max_tokens=cfg.llm.confide_max_tokens)
     except Exception as e:
         logger.error(f"Confide LLM error: {e}")
         await _qq_client.send_private_msg(user_id, "唔...刚才走神了，你再说一遍好不好～")

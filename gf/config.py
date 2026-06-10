@@ -27,6 +27,7 @@ class LLMConfig:
     model: str = "moonshot-v1-8k"
     vision_model: str = "moonshot-v1-8k-vision-preview"
     max_tokens: int = 512
+    confide_max_tokens: int = 2048
     temperature: float = 0.9
 
     def __post_init__(self):
@@ -36,6 +37,7 @@ class LLMConfig:
         self.model = os.getenv("LLM_MODEL", self.model)
         self.vision_model = os.getenv("LLM_VISION_MODEL", self.vision_model)
         self.max_tokens = int(os.getenv("LLM_MAX_TOKENS", str(self.max_tokens)))
+        self.confide_max_tokens = int(os.getenv("LLM_CONFIDE_MAX_TOKENS", str(self.confide_max_tokens)))
         self.temperature = float(os.getenv("LLM_TEMPERATURE", str(self.temperature)))
 
 

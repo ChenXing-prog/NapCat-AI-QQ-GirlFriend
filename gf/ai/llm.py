@@ -89,17 +89,21 @@ class LLMClient:
         text, tag = self._clean_response(raw_text)
         return text, tag
 
-    async def chat_multi(self, messages: list[dict]) -> Tuple[List[MessagePart], Optional[str]]:
+    async def chat_multi(self, messages: list[dict], max_tokens: int = 0) -> Tuple[List[MessagePart], Optional[str]]:
         """Send messages and parse into position-aware message parts.
+
+        Args:
+            messages: Chat messages
+            max_tokens: Override max tokens (0 = use config default)
 
         Returns:
             Tuple of (list_of_message_parts, fallback_sticker_tag_or_None).
-            Each part is one of: text, sticker_mid, sticker_end, sticker_only.
         """
+        mt = max_tokens if max_tokens > 0 else self.config.max_tokens
         response = await self._client.chat.completions.create(
             model=self.config.model,
             messages=messages,
-            max_tokens=self.config.max_tokens,
+            max_tokens=mt,
             temperature=self.config.temperature,
         )
         raw_text = response.choices[0].message.content or ""
