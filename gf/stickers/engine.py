@@ -63,12 +63,15 @@ class StickerEngine:
 
     # Fallback: if requested tag has no images, try similar ones
     _FALLBACK = {
-        "pat": ["hug", "cute", "shy"], "caring": ["hug", "love", "smile"],
-        "love": ["hug", "shy", "smile"], "hug": ["love", "cute", "shy"],
-        "laugh": ["smile", "excited", "smirk"], "satisfied": ["smile", "smirk", "sleepy"],
-        "heartbroken": ["cry", "teary", "corner"], "rage": ["pout", "speechless"],
-        "panic": ["shocked", "speechless", "questioning"], "proud": ["smirk", "star_eyes", "excited"],
-        "sigh": ["speechless", "corner", "sleepy"],
+        "pat": ["cute", "hug", "shy"], "caring": ["cute", "love", "hug"],
+        "love": ["cute", "hug", "shy"], "hug": ["cute", "love", "shy"],
+        "smile": ["cute", "laugh", "shy"], "shy": ["cute", "love", "smile"],
+        "star_eyes": ["cute", "excited", "smile"], "excited": ["cute", "star_eyes", "smile"],
+        "laugh": ["cute", "smile", "excited"], "satisfied": ["cute", "smile", "sleepy"],
+        "heartbroken": ["cute", "cry", "teary"], "rage": ["pout", "cute", "speechless"],
+        "panic": ["shocked", "cute", "speechless"], "proud": ["cute", "smirk", "star_eyes"],
+        "sigh": ["cute", "speechless", "sleepy"], "sleepy": ["cute", "sigh", "smile"],
+        "begging": ["cute", "pout", "shy"],
     }
 
     def pick(self, tag: str, banned: Optional[set] = None) -> Optional[Path]:
