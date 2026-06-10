@@ -53,48 +53,47 @@ def _parse_json(text: str) -> dict:
         return json.loads(text[start:end])
     return {}
 
-EXTRACT_FACTS_PROMPT = """你是一个记忆提取器。阅读以下对话片段，从中提取关于用户的**关键事实**。
+EXTRACT_FACTS_PROMPT = """你是一个记忆提取器。阅读以下对话片段，提取**双向**的关键事实。
 
-只提取值得长期记住的信息。如果对话中没有值得记住的新信息，返回空列表。
+## 需要提取的信息
 
-## 需要提取的信息类型
+**关于用户**：
+- 个人信息、偏好、人际关系、健康、学业/工作、经历、习惯
 
-- **个人信息**：名字、年龄、生日、学校、专业、城市
-- **偏好**：喜欢/不喜欢什么（食物、音乐、游戏、动漫等）
-- **人际关系**：家人、朋友、恋人、宠物
-- **健康**：过敏、疾病、作息习惯
-- **学业/工作**：考试、面试、课题、项目
-- **经历**：去过的地方、做过的事、有趣的经历
-- **习惯**：日常作息、行为模式
+**关于我（AI女友）**：
+- 我分享了关于自己的事（我的生活、我的感受、我的经历）
+- 我做出了承诺（"我会帮你复习""我明天叫你起床"）
+- 我表达了重要的感受
 
 ## 输出格式
 
-只输出 JSON，不要其他文字。
+只输出 JSON。importance: 1-10。
 
 ```json
 {
   "facts": [
-    {"category": "preferences", "content": "用户喜欢玩FPS游戏，尤其是CS:GO和瓦罗兰特", "importance": 8},
-    {"category": "personal_info", "content": "用户对花生过敏", "importance": 9}
+    {"subject": "user", "category": "preferences", "content": "用户喜欢FPS游戏", "importance": 8},
+    {"subject": "me", "category": "self_disclosure", "content": "我告诉用户我的设计项目快做完了", "importance": 6},
+    {"subject": "me", "category": "promise", "content": "我答应明天早上叫用户起床", "importance": 9}
   ]
 }
-```
-
-importance: 1-10。10 = 非常重要（过敏、生日、亲人），5 = 一般重要（喜欢什么游戏），1 = 琐碎"""
+```"""
 
 SUMMARIZE_PROMPT = """你是一个对话摘要器。将下面的对话压缩成简洁的摘要。
 
 保留：主要话题、情绪变化、重要事件、关键信息。
 丢弃：寒暄、重复内容、琐碎闲聊。
+如果对话中包含倾诉/深情告白/重要承诺，在摘要中标注为重要内容。
 
 ## 输出格式
 
-只输出 JSON，不要其他文字。
+只输出 JSON。
 
 ```json
 {
-  "summary": "这段对话中，用户在准备期末考试，情绪比较焦虑。讨论了《迷宫饭》第二季定档的消息，用户表示很期待。用户提到周末想和朋友去漫展但没时间。",
-  "key_topics": ["期末考试", "迷宫饭", "漫展"]
+  "summary": "这段对话中，用户在准备期末考试...",
+  "key_topics": ["期末考试", "迷宫饭"],
+  "high_importance": false
 }
 ```"""
 
@@ -162,6 +161,7 @@ class MemoryManager:
             raw = await _lite_chat(SUMMARIZE_PROMPT, conversation[:4000], max_tokens=300)
             data = _parse_json(raw)
             if data.get("summary"):
+                data["high_importance"] = data.get("high_importance", False)
                 logger.info(f"Summarized for {user_id}: {data.get('key_topics', [])}")
             return data
         except Exception as e:
@@ -174,7 +174,7 @@ class MemoryManager:
 
     async def log_daily_emotion(self, user_id: str, recent_messages: list[dict],
                                 emotion_engine) -> None:
-        """Summarize today's emotional trajectory using stable moonshot-v1-8k."""
+        """Summarize today's interaction atmosphere using stable moonshot-v1-8k."""
         from datetime import date
         today = date.today().isoformat()
         user_msgs = [m["content"] for m in recent_messages[-50:] if m["role"] == "user"]
@@ -183,8 +183,8 @@ class MemoryManager:
         try:
             combined = "\n".join(msg[:120] for msg in user_msgs[-20:])
             raw = await _lite_chat(
-                "总结用户今天的整体情绪。只输出JSON：{\"dominant\":\"happy|sad|anxious|excited|tired|neutral\",\"note\":\"一句话总结（15字内）\"}",
-                combined[:2000], max_tokens=80,
+                "总结今天互动的整体氛围。不只用户情绪，也包括：对话的温暖程度、是否有高光或低谷时刻、是否比平时更亲密。只输出JSON：{\"dominant\":\"warm|happy|intimate|anxious|tired|cold|neutral\",\"note\":\"一句话（20字内），包含氛围和情绪\"}",
+                combined[:2000], max_tokens=100,
             )
             data = _parse_json(raw)
             traj = emotion_engine.get_trajectory(user_id) if emotion_engine else None

@@ -334,11 +334,13 @@ class MemoryStore:
     # ------------------------------------------------------------------
 
     def add_facts(self, user_id: str, facts: list[dict]):
-        """Merge new facts into core_facts. Facts are [{category, content, importance}]."""
+        """Merge new facts into core_facts. Facts are [{subject, category, content, importance}].
+
+        subject: "user" (about the user) or "me" (about the AI girlfriend herself).
+        """
         profile = self.get_user(user_id)
         now = time.time()
         for f in facts:
-            # Dedup: skip if identical content already exists
             existing = [e for e in profile.core_facts if e["content"] == f["content"]]
             if existing:
                 existing[0]["last_accessed"] = now
@@ -346,6 +348,7 @@ class MemoryStore:
                 existing[0]["importance"] = max(existing[0].get("importance", 1), f.get("importance", 5))
                 continue
             profile.core_facts.append({
+                "subject": f.get("subject", "user"),
                 "category": f.get("category", "personal_info"),
                 "content": f["content"],
                 "importance": f.get("importance", 5),
@@ -381,27 +384,36 @@ class MemoryStore:
                 seen[key] = f
         return sorted(seen.values(), key=lambda x: x.get("importance", 0), reverse=True)
 
-    def get_context_facts(self, user_id: str, limit: int = 12) -> list[dict]:
-        """Get top facts for LLM context, sorted by importance × recency × access."""
+    def get_context_facts(self, user_id: str, limit: int = 20) -> list[dict]:
+        """Get top facts for LLM context. Returns user facts + 1-2 'me' facts."""
         profile = self.get_user(user_id)
         now = time.time()
         scored = []
         for f in profile.core_facts:
             age_days = (now - f.get("created_at", now)) / 86400
-            recency = 1.0 / (1.0 + age_days)  # 0..1, newer = higher
+            recency = 1.0 / (1.0 + age_days)
             importance = f.get("importance", 5) / 10.0
             accesses = min(f.get("access_count", 0), 10) / 10.0
             score = importance * 0.5 + recency * 0.3 + accesses * 0.2
             scored.append((score, f))
         scored.sort(key=lambda x: x[0], reverse=True)
-        return [f for _, f in scored[:limit]]
+        # Split user vs me
+        user_facts = [f for _, f in scored if f.get("subject", "user") == "user"][:limit - 2]
+        me_facts = [f for _, f in scored if f.get("subject") == "me"][:2]
+        # Interleave: user fact, maybe me fact, user fact, maybe me fact...
+        result = []
+        for i, uf in enumerate(user_facts):
+            result.append(uf)
+            if i % 6 == 5 and me_facts:
+                result.append(me_facts.pop(0))
+        return result
 
     # ------------------------------------------------------------------
     # Long-term memory: Summaries
     # ------------------------------------------------------------------
 
     def add_summary(self, user_id: str, date_range: str, summary: str,
-                    key_topics: list[str], message_count: int):
+                    key_topics: list[str], message_count: int, high_importance: bool = False):
         """Add a conversation batch summary."""
         profile = self.get_user(user_id)
         profile.summaries.append({
@@ -409,15 +421,22 @@ class MemoryStore:
             "summary": summary,
             "key_topics": key_topics,
             "message_count": message_count,
+            "high_importance": high_importance,
             "created_at": time.time(),
         })
-        # Trim old
+        # Trim old, but preserve high_importance ones
         if len(profile.summaries) > 10:
-            # Compress oldest 7 into 1
-            old = profile.summaries[:-3]  # keep latest 3
+            old = profile.summaries[:-3]
             if len(old) >= 2:
-                compressed = self._compress_summaries(old)
-                profile.summaries = [compressed] + profile.summaries[-3:]
+                important = [s for s in old if s.get("high_importance")]
+                regular = [s for s in old if not s.get("high_importance")]
+                if len(regular) >= 2:
+                    compressed = self._compress_summaries(regular)
+                    profile.summaries = important + [compressed] + profile.summaries[-3:]
+                    if len(profile.summaries) > 15:
+                        profile.summaries = profile.summaries[-15:]
+                else:
+                    profile.summaries = profile.summaries[-12:]
             else:
                 profile.summaries = profile.summaries[-10:]
         self.save_user(profile)

@@ -216,11 +216,24 @@ async def _real_handle_message(user_id: str, message: str):
     # Web search results (injected before memory)
     if search_ctx:
         llm_msgs.append(LLMClient.system_message(search_ctx))
-    # Tier 2: Core Facts
-    facts = _memory.get_context_facts(user_id)
-    if facts:
-        fact_text = "关于" + (user.name or "对方") + "你记得这些：\n" + "\n".join(f"- {f['content']}" for f in facts)
+    # Tier 2: Core Facts (bidirectional: user + me)
+    facts = _memory.get_context_facts(user_id, limit=20)
+    user_facts = [f for f in facts if f.get("subject", "user") == "user"]
+    me_facts = [f for f in facts if f.get("subject") == "me"]
+    if user_facts:
+        fact_text = "关于" + (user.name or "对方") + "你记得这些：\n" + "\n".join(f"- {f['content']}" for f in user_facts)
         llm_msgs.append(LLMClient.system_message(fact_text))
+    if me_facts and random.random() < 0.3:
+        me_text = "关于你自己，你记得：\n" + "\n".join(f"- {f['content']}" for f in me_facts)
+        llm_msgs.append(LLMClient.system_message(me_text))
+    # Milestone reflection (one-time, at thresholds)
+    total = _memory.get_user(user_id).total_messages
+    if total in (100, 300, 500, 1000, 2000) and not _memory.get_user(user_id).preferences.get(f"milestone_{total}_reflected"):
+        llm_msgs.append(LLMClient.system_message(
+            f"[你们已经聊了{total}条消息了。这是一个小小的里程碑。可以在回复里自然地感慨一下，一两句就好。]"))
+        user = _memory.get_user(user_id)
+        user.preferences[f"milestone_{total}_reflected"] = True
+        _memory.save_user(user)
     # Tier 3: Summaries
     summaries = _memory.get_context_summaries(user_id)
     if summaries:
