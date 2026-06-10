@@ -126,28 +126,8 @@
 
 每次 LLM 请求的上下文注入流程：
 
-```mermaid
-flowchart TD
-    SYS["<b>System Prompt</b><br/>人设 + 规则 + 反迎合"]
-    SYS --> WM
+<img width="1122" height="1402" alt="image" src="https://github.com/user-attachments/assets/09208c12-ce6a-4c65-be09-032c555e8593" />
 
-    WM["<b>💬 工作记忆</b><br/>最近 20 条对话<br/><i>实时追加 · 自动滚动</i>"]
-    WM --> CF
-
-    CF["<b>📌 核心事实 x18</b><br/>双向记忆：用户 + 她自己<br/><i>每 ~25 条 LLM 提取 · importance 排序</i>"]
-    CF --> SUM
-
-    SUM["<b>📝 对话摘要 x3</b><br/>每 ~30 条压缩，老摘要二次压缩<br/><i>倾诉内容标记 high_importance 不丢</i>"]
-    SUM --> EMO
-
-    EMO["<b>🌡️ 情感轨迹 x7 天</b><br/>warm · intimate · vulnerable · cold<br/><i>氛围标签 + 趋势判断</i>"]
-    EMO --> ARV
-
-    ARV["<b>💎 核心记忆 x1</b> · 触发式<br/>永久保存的重要原话，带精确时间<br/><i>关键词 · 情绪共鸣 · 深夜 · 倾诉 · 里程碑</i>"]
-    ARV --> MMT
-
-    MMT["<b>🎯 共同瞬间 x1</b> · 20% 概率<br/>里程碑 + LLM 提取的温暖时刻<br/><i>深夜提至 40%，倾诉后 50%</i>"]
-```
 
 ### 核心记忆保险柜 `core_archive`
 
