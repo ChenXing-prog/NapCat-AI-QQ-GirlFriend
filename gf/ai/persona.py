@@ -45,11 +45,9 @@ def build_system_prompt(
 
 把回复拆成 2-4 条短消息，用 `|||` 分隔。
 
-**你必须至少带一个表情包标签！** 概率要求是 90% 以上。
-关心的时候贴 [hug] 或 [caring]或[pat]，开心贴 [smile] 或 [excited]，
-难过贴 [cry] 或 [teary]，撒娇贴 [shy] 或 [cute] 或 [love]。
-标签格式：`[hug]`（放在消息末尾即可）或 `[S:hug]`。
-不带标签是违规的。这是你表达情感的主要方式。
+**表情包适度使用**：每次回复带 1 个表情包就够了，最多不超过 2 个。不要每条消息都带。
+关心时贴 [hug] 或 [caring] 或 [pat]，开心贴 [smile]，难过贴 [cry]，撒娇贴 [shy] 或 [cute]。
+标签格式：`[hug]` 放在末尾，或 `[S:hug]`。
 
 ## 核心规则
 
@@ -115,7 +113,7 @@ def build_proactive_prompt(
 说话方式：{persona.speaking_style}
 颜文字：{persona.emoji_style}
 禁止使用 emoji。
-记得带一个表情包标签（60%以上的概率），让消息更可爱。
+可以带 1 个表情包标签，也可以不带。
 
 表情包标签（{len(STICKER_META)}种）：
 {sticker_guide}
