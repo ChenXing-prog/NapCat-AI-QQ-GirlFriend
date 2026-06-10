@@ -8,6 +8,10 @@ from ..config import get_config
 
 logger = logging.getLogger(__name__)
 
+# Cache: file_id → description, to avoid duplicate vision API calls
+_desc_cache: dict[str, str] = {}
+_MAX_CACHE = 100
+
 # Match file_id from [CQ:image,file=XXXX.jpg,...]
 _IMAGE_FILE_RE = re.compile(r"\[CQ:image[^\]]*file=([A-Za-z0-9]+\.[a-z]+)")
 
@@ -23,7 +27,11 @@ def is_image_message(message: str) -> bool:
 
 
 async def describe_image(file_id: str) -> str | None:
-    """Read image via NapCat get_file, send to vision model."""
+    """Read image via NapCat get_file, send to vision model. Cached by file_id."""
+    global _desc_cache
+    if file_id in _desc_cache:
+        logger.info(f"Vision cache hit: {file_id}")
+        return _desc_cache[file_id]
     cfg = get_config()
     try:
         # Step 1: Get file info from NapCatQQ
@@ -78,6 +86,10 @@ async def describe_image(file_id: str) -> str | None:
         )
         desc = resp.choices[0].message.content.strip()
         logger.info(f"Vision described [{file_id}]: {desc}")
+        _desc_cache[file_id] = desc
+        if len(_desc_cache) > _MAX_CACHE:
+            # Drop oldest entry
+            _desc_cache.pop(next(iter(_desc_cache)))
         return desc
     except Exception as e:
         logger.warning(f"Vision describe failed for {file_id}: {e}")
