@@ -23,6 +23,7 @@ from .ai.personas import get_persona
 from .ai.emotion import EmotionEngine
 from .ai.events import EventExtractor, build_followup_context
 from .ai.memory import MemoryManager
+from .ai.search import maybe_search
 from .memory.store import MemoryStore
 from .stickers.engine import StickerEngine
 from .bot.client import QQClient
@@ -201,9 +202,17 @@ async def _real_handle_message(user_id: str, message: str):
     if _events: asyncio.create_task(_extract_events(user_id, message))
     reminders = _memory.get_due_reminders(user_id)
     event_ctx = build_followup_context(reminders) if reminders else ""
+    # Web search (auto-detect, inject results if needed)
+    search_ctx = await maybe_search(message)
+    if search_ctx:
+        logger.info(f"Search results injected for {user_id}")
+
     # Prompt + LLM with long-term memory
     prompt = build_system_prompt(cfg.bot.bot_name, user.name or "主人", persona=persona, emotion_context=emotion_ctx, event_context=event_ctx)
     llm_msgs = [LLMClient.system_message(prompt)]
+    # Web search results (injected before memory)
+    if search_ctx:
+        llm_msgs.append(LLMClient.system_message(search_ctx))
     # Tier 2: Core Facts
     facts = _memory.get_context_facts(user_id)
     if facts:
