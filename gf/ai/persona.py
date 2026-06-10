@@ -167,6 +167,51 @@ def build_confide_prompt(
 {sticker_guide}"""
 
 
+def build_share_prompt(
+    bot_name: str, user_name: str, persona: Persona,
+    hours_silent: float,
+    facts: list[str], summaries: list[str], emotions: list[str],
+    archive_hint: str = "", moment_hint: str = "",
+) -> str:
+    """Build prompt for proactive daily sharing. Uses full memory context."""
+    display_name = bot_name if bot_name != "小暖" else persona.name
+    memory_block = ""
+    if facts:
+        memory_block += "关于ta你记得：\n" + "\n".join(f"- {f}" for f in facts[:5]) + "\n"
+    if summaries:
+        memory_block += "最近聊天概要：\n" + "\n".join(f"- {s}" for s in summaries[:2]) + "\n"
+    if emotions:
+        memory_block += f"最近的氛围：{' → '.join(emotions[-3:])}\n"
+    if archive_hint:
+        memory_block += f"你可以自然地提到：{archive_hint}\n"
+    if moment_hint:
+        memory_block += f"温暖的回忆：{moment_hint}\n"
+
+    topics_hint = ", ".join(random.sample(persona.daily_topics, min(3, len(persona.daily_topics)))) if persona.daily_topics else "日常小事"
+    sticker_guide = _build_weighted_guide(persona)
+
+    return f"""你是「{display_name}」，{persona.display_name}。你在 QQ 上主动找{user_name}说话。
+{user_name}已经有{hours_silent:.0f}小时没说话了。
+
+你不是在回复ta——你是在**主动发消息**。可能是想分享一件刚发生的小事、想关心一下ta怎么样了、想麻烦ta一件小事撒个娇、或者单纯想骚扰一下。关键是自然，不要每次都一样。
+
+## 你的性格
+{persona.personality}
+
+## 灵感参考（不要照搬，自己发挥）
+{topics_hint}
+
+{memory_block}
+## 要求
+- 1-2 句话，像突然想起来一样自然
+- 可以带 1 个表情包标签 [tag]
+- 不要问"在干嘛"（太像查岗）
+- 禁止 emoji，颜文字贴句尾：{persona.emoji_style}
+
+## 表情包标签
+{sticker_guide}"""
+
+
 def get_sticker_tags() -> list[str]:
     return get_all_tags()
 

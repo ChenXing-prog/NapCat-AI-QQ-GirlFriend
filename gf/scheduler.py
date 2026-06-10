@@ -169,11 +169,27 @@ class ProactiveScheduler:
             triggered = True
             trigger_type = "evening"
 
-        # 3. Silence detection
-        elif self._is_silent(user, now, preset["silence_hours"]) \
+        # 3. Daily random share (2-3/day during active hours)
+        if not triggered and self._should_share_now(now_dt, user, now, prefs):
+            await self._send_share(user_id)
+            prefs["last_share"] = now
+            user.preferences = prefs
+            self._memory.save_user(user)
+            return
+
+        # 4. Silence detection — 50% share instead of check-in
+        if not triggered and self._is_silent(user, now, preset["silence_hours"]) \
                 and self._cooldown_ok(prefs, now, min_interval_hours=1):
-            triggered = True
-            trigger_type = "silence"
+            if random.random() < 0.5:
+                await self._send_share(user_id)
+                prefs["last_proactive"] = now
+                prefs["proactive_count_today"] = count_today + 1
+                user.preferences = prefs
+                self._memory.save_user(user)
+                return
+            else:
+                triggered = True
+                trigger_type = "silence"
 
         if not triggered:
             return
@@ -229,6 +245,83 @@ class ProactiveScheduler:
         """Ensure we don't spam — at least min_interval_hours between proactive messages."""
         last = prefs.get("last_proactive", 0)
         return (now - last) / 3600 >= min_interval_hours
+
+    def _should_share_now(self, dt: datetime, user, now: float, prefs: dict) -> bool:
+        """Check if it's a good time for a random daily share."""
+        hour = dt.hour
+        # Active hours only (9-23), skip morning/evening window edges
+        if hour < 9 or hour >= 23:
+            return False
+        # Skip if user was active in last 2h
+        if user.recent_messages:
+            last_msg = user.recent_messages[-1]
+            hours_since = (now - last_msg.get("time", 0)) / 3600
+            if hours_since < 2:
+                return False
+        # At least 3h since last share
+        last_share = prefs.get("last_share", 0)
+        if (now - last_share) / 3600 < 3:
+            return False
+        # Max 3 per day
+        today = date.today().isoformat()
+        share_count = prefs.get("share_count_today", 0)
+        if share_count >= 3:
+            return False
+        # Random chance to actually send (avoid all users triggering at once)
+        if random.random() > 0.3:
+            return False
+        prefs["share_count_today"] = share_count + 1
+        return True
+
+    async def _send_share(self, user_id: str):
+        """Generate and send a daily share using LLM with full memory context."""
+        from .ai.persona import build_share_prompt
+        from .ai.personas import get_persona
+        user = self._memory.get_user(user_id)
+        persona = get_persona(user.persona_id)
+        if user.recent_messages:
+            last_time = user.recent_messages[-1].get("time", 0)
+            hours_silent = (time.time() - last_time) / 3600
+        else:
+            hours_silent = 24
+        # Collect memory context
+        facts = [f["content"] for f in self._memory.get_context_facts(user_id, limit=6)]
+        summaries = [s["summary"] for s in self._memory.get_context_summaries(user_id, limit=2)]
+        emotions = [f"{e['date'][-5:]}({e.get('note','')})" for e in self._memory.get_emotion_trajectory(user_id, 3)]
+        # Archive/moment hint
+        archive = self._memory.search_archive(user_id, limit=1)
+        archive_hint = ""
+        if archive:
+            a = archive[0]
+            ts = time.strftime("%m月%d日", time.localtime(a.get("created_at", time.time())))
+            archive_hint = f"{ts}，他说过'{a['content'][:60]}'"
+        moment = self._memory.get_random_moment(user_id)
+        moment_hint = moment["content"] if moment else ""
+        prompt = build_share_prompt(
+            self._memory.get_user(user_id).name or user_id, user.name or "主人",
+            persona, hours_silent, facts, summaries, emotions, archive_hint, moment_hint,
+        )
+        try:
+            reply, sticker_tag = await self._llm.chat([
+                self._llm.system_message(prompt),
+                self._llm.user_message("[系统：现在主动给ta发一条消息]"),
+            ])
+        except Exception as e:
+            logger.error(f"Share generation error: {e}")
+            return
+        if not reply:
+            return
+        await self._qq.send_private_msg(user_id, reply)
+        self._memory.add_message(user_id, "assistant", reply)
+        if sticker_tag:
+            path = self._stickers.pick(sticker_tag)
+            if path:
+                await asyncio.sleep(1.0)
+                try:
+                    await self._qq.send_image(user_id, str(path))
+                except Exception:
+                    pass
+        logger.info(f"Daily share sent to {user_id}: {reply[:60]}...")
 
     # ------------------------------------------------------------------
     # Proactive message generation & sending
