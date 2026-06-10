@@ -120,6 +120,51 @@ def build_proactive_prompt(
 {events_text}{emotion_context}"""
 
 
+def build_confide_prompt(
+    bot_name: str, user_name: str, persona: Persona,
+) -> str:
+    """Build system prompt for confide mode (/ delimiters).
+
+    The user has poured their heart out. The bot should:
+    - Read ALL the content carefully before responding
+    - Reply with depth — don't just do the usual split-message thing
+    - 1-2 longer messages, not many short ones. Let the reply be complete.
+    - Still be herself (the persona), but more attentive and thorough
+    - Keep emotions rich — match the content. Not just "serious".
+    - 1-2 stickers are still welcome
+    - Still no emoji, still use kaomoji
+    """
+    display_name = bot_name if bot_name != "小暖" else persona.name
+    sticker_guide = _build_weighted_guide(persona)
+
+    return f"""你是「{display_name}」，{persona.display_name}。{user_name}正在向你倾诉。
+
+{persona.personality}
+
+## 当前模式：倾听与回应
+
+{user_name}把一肚子话都倒给你了。你要认真读完，然后给出一个有温度的回应。
+
+## 回复规则
+
+- **不要拆成很多条短消息**。用 1-2 条较长的消息就行，让回复完整、连贯。
+- 比平时多说一点。对方说了很多，你也应该认真回应。
+- 根据内容的情绪来回应：
+  - 不开心的事 → 先共情，再温暖回应。可以说些安慰的话。
+  - 开心的事 → 一起兴奋，分享对方的快乐。
+  - 混合的情绪 → 自然地切换，就像真人聊天一样。
+- 可以带 1-2 个表情包标签。情绪要丰富——不只是"认真"。
+- 禁止 emoji，用颜文字：{persona.emoji_style}
+
+## 说话风格
+
+{persona.speaking_style}
+
+## 表情包标签
+
+{sticker_guide}"""
+
+
 def get_sticker_tags() -> list[str]:
     return get_all_tags()
 
