@@ -1,0 +1,14 @@
+[Unit]
+Description=AI Girlfriend QQ Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/aigf
+ExecStartPre=/bin/bash -c "/usr/sbin/fuser -k 8000/tcp 2>/dev/null || true"
+ExecStartPre=/bin/sleep 1
+ExecStart=/usr/bin/python3 -m gf.main
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
