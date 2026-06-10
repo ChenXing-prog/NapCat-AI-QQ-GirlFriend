@@ -41,15 +41,27 @@ async def _lite_chat(system_prompt: str, user_content: str, max_tokens: int = 20
 
 
 def _parse_json(text: str) -> dict:
-    """Robust JSON extraction from LLM output."""
+    """Robust JSON extraction from LLM output. Handles extra data after the first object."""
     text = text.strip()
     if "```json" in text:
         text = text.split("```json")[1].split("```")[0]
     elif "```" in text:
         text = text.split("```")[1].split("```")[0]
     start = text.find("{")
+    if start < 0:
+        return {}
+    # Find matching closing brace for the first object
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(text[start:i + 1])
+    # Fallback: try rfind
     end = text.rfind("}") + 1
-    if start >= 0 and end > start:
+    if end > start:
         return json.loads(text[start:end])
     return {}
 
