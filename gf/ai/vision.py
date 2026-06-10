@@ -1,28 +1,20 @@
-"""Image understanding via moonshot vision model. Downloads QQ images, sends to vision API, returns descriptions."""
+"""Image understanding via NapCat get_file + moonshot vision model."""
 
 import base64, io, logging, re
 import httpx
 from openai import AsyncOpenAI
+from PIL import Image
 from ..config import get_config
 
 logger = logging.getLogger(__name__)
 
-# Match [CQ:image,file=...,url=https://...] in QQ messages
-# URL can contain & and , so we need to capture up to the closing bracket or comma before the next CQ param
-_IMAGE_CQ_RE = re.compile(r"\[CQ:image[^\]]*url=([^\]\s]+)")
-
-# Match [CQ:image,...] without url (local file)
-_IMAGE_FILE_RE = re.compile(r"\[CQ:image[^\]]*file=([^\],&]+)")
+# Match file_id from [CQ:image,file=XXXX.jpg,...]
+_IMAGE_FILE_RE = re.compile(r"\[CQ:image[^\]]*file=([A-Za-z0-9]+\.[a-z]+)")
 
 
-def extract_image_urls(message: str) -> list[str]:
-    """Extract image URLs from QQ CQ codes. Returns list of URLs."""
-    urls = _IMAGE_CQ_RE.findall(message)
-    if urls:
-        return urls
-    # Fallback: local file paths (won't work for remote users but try anyway)
-    files = _IMAGE_FILE_RE.findall(message)
-    return files
+def extract_file_ids(message: str) -> list[str]:
+    """Extract file IDs from QQ CQ:image codes."""
+    return _IMAGE_FILE_RE.findall(message)
 
 
 def is_image_message(message: str) -> bool:
@@ -30,19 +22,29 @@ def is_image_message(message: str) -> bool:
     return "[CQ:image" in message
 
 
-async def describe_image(image_url: str) -> str | None:
-    """Download image from URL, send to vision model, return description."""
+async def describe_image(file_id: str) -> str | None:
+    """Download image via NapCat get_file, send to vision model."""
     cfg = get_config()
     try:
-        # Download image
+        # Step 1: Get base64 from NapCatQQ
         async with httpx.AsyncClient(timeout=30) as http:
-            resp = await http.get(image_url)
-            resp.raise_for_status()
-            img_data = resp.content
+            resp = await http.post(
+                f"{cfg.napcat.base_url}/get_file",
+                json={"file_id": file_id},
+            )
+            data = resp.json()
+            if data.get("status") != "ok" or not data.get("data"):
+                logger.warning(f"NapCat get_file failed for {file_id}: {data}")
+                return None
+            file_data = data["data"]
+            # file_data might be base64 string or raw bytes
+            if isinstance(file_data, str):
+                img_bytes = base64.b64decode(file_data)
+            else:
+                img_bytes = file_data
 
-        # Resize if too large
-        from PIL import Image
-        img = Image.open(io.BytesIO(img_data))
+        # Step 2: Resize and encode for vision API
+        img = Image.open(io.BytesIO(img_bytes))
         if img.width > 800:
             ratio = 800 / img.width
             img = img.resize((800, int(img.height * ratio)), Image.LANCZOS)
@@ -52,6 +54,7 @@ async def describe_image(image_url: str) -> str | None:
         img.save(buf, format="JPEG", quality=80)
         b64 = base64.b64encode(buf.getvalue()).decode()
 
+        # Step 3: Vision API
         client = AsyncOpenAI(api_key=cfg.llm.api_key, base_url=cfg.llm.base_url)
         resp = await client.chat.completions.create(
             model=cfg.llm.vision_model,
@@ -66,8 +69,8 @@ async def describe_image(image_url: str) -> str | None:
             temperature=0.3,
         )
         desc = resp.choices[0].message.content.strip()
-        logger.info(f"Vision described: {desc}")
+        logger.info(f"Vision described [{file_id}]: {desc}")
         return desc
     except Exception as e:
-        logger.warning(f"Vision describe failed: {e}")
+        logger.warning(f"Vision describe failed for {file_id}: {e}")
         return None

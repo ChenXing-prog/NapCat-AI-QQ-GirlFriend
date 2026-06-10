@@ -24,7 +24,7 @@ from .ai.emotion import EmotionEngine
 from .ai.events import EventExtractor, build_followup_context
 from .ai.memory import MemoryManager
 from .ai.search import maybe_search
-from .ai.vision import is_image_message, extract_image_urls, describe_image
+from .ai.vision import is_image_message, extract_file_ids, describe_image
 from .memory.store import MemoryStore
 from .stickers.engine import StickerEngine
 from .bot.client import QQClient
@@ -91,13 +91,13 @@ async def handle_private_message(user_id: str, message: str):
     """Route incoming QQ messages: commands → immediate, confide → collect, chat → buffer."""
     cfg = get_config()
 
-    # Image detection — convert to text description before processing
+    # Image detection — download via NapCat get_file, describe with vision model
     if is_image_message(message):
-        urls = extract_image_urls(message)
-        if urls:
+        file_ids = extract_file_ids(message)
+        if file_ids:
             descriptions = []
-            for url in urls[:3]:  # max 3 images at once
-                desc = await describe_image(url)
+            for fid in file_ids[:3]:
+                desc = await describe_image(fid)
                 if desc:
                     descriptions.append(desc)
             if descriptions:
@@ -105,7 +105,6 @@ async def handle_private_message(user_id: str, message: str):
                 handle_incoming(user_id, image_text, _memory, _real_handle_message)
                 return
             else:
-                # All downloads failed, fall through to text
                 message = "用户发了一张图片（暂时无法识别）"
         else:
             message = "用户发了一张图片（暂时无法识别）"
