@@ -293,10 +293,10 @@ async def _run_memory_tasks(user_id: str):
         return
     try:
         recent = _memory.get_recent_messages(user_id, 40)
-        facts = await _mem_mgr.maybe_extract_facts(user_id, recent)
+        facts = await _mem_mgr.maybe_extract_facts(user_id, recent, _memory)
         if facts:
             _memory.add_facts(user_id, facts)
-        summary = await _mem_mgr.maybe_summarize(user_id, recent, _memory.get_context_summaries(user_id, 10))
+        summary = await _mem_mgr.maybe_summarize(user_id, recent, _memory.get_context_summaries(user_id, 10), _memory)
         if summary:
             total_msgs = _memory.get_user(user_id).total_messages
             start = max(0, total_msgs - len(recent))

@@ -53,19 +53,35 @@ SUMMARIZE_PROMPT = """你是一个对话摘要器。将下面的对话压缩成�
 
 
 class MemoryManager:
-    """Orchestrates fact extraction and summarization."""
+    """Orchestrates fact extraction and summarization.
+
+    Counters are persisted in UserProfile.preferences so they survive restarts.
+    """
 
     def __init__(self, llm: LLMClient):
         self._llm = llm
-        self._extract_counters: dict[str, int] = {}  # user_id → msgs since last extract
-        self._summary_counters: dict[str, int] = {}  # user_id → msgs since last summary
 
-    async def maybe_extract_facts(self, user_id: str, recent_messages: list[dict]) -> list[dict]:
+    def _counter(self, store, user_id: str, key: str) -> int:
+        """Get persisted counter for a user."""
+        prefs = store.get_user(user_id).preferences
+        return prefs.get(key, 0)
+
+    def _inc_counter(self, store, user_id: str, key: str) -> int:
+        """Increment and save a persisted counter. Returns new value."""
+        profile = store.get_user(user_id)
+        val = profile.preferences.get(key, 0) + 1
+        profile.preferences[key] = val
+        store.save_user(profile)
+        return val
+
+    async def maybe_extract_facts(self, user_id: str, recent_messages: list[dict],
+                                   store) -> list[dict]:
         """Extract facts if enough new messages accumulated (every ~25 msgs)."""
-        self._extract_counters[user_id] = self._extract_counters.get(user_id, 0) + 1
-        if self._extract_counters[user_id] < 25:
+        val = self._inc_counter(store, user_id, "mem_fact_counter")
+        if val < 25:
             return []
-        self._extract_counters[user_id] = 0
+        store.get_user(user_id).preferences["mem_fact_counter"] = 0
+        store.save_user(store.get_user(user_id))
 
         conversation = "\n".join(
             f"{'👤' if m['role'] == 'user' else '🤖'}: {m['content'][:200]}"
@@ -92,12 +108,13 @@ class MemoryManager:
             return []
 
     async def maybe_summarize(self, user_id: str, recent_messages: list[dict],
-                              existing_summaries: list[dict]) -> dict | None:
+                              existing_summaries: list[dict], store) -> dict | None:
         """Summarize if enough messages accumulated (every ~30 msgs)."""
-        self._summary_counters[user_id] = self._summary_counters.get(user_id, 0) + 1
-        if self._summary_counters[user_id] < 30:
+        val = self._inc_counter(store, user_id, "mem_summary_counter")
+        if val < 30:
             return None
-        self._summary_counters[user_id] = 0
+        store.get_user(user_id).preferences["mem_summary_counter"] = 0
+        store.save_user(store.get_user(user_id))
 
         conversation = "\n".join(
             f"{'👤' if m['role'] == 'user' else '🤖'}: {m['content'][:150]}"
