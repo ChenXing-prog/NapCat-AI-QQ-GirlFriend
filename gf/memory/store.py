@@ -39,6 +39,9 @@ class UserProfile:
     events: list[dict] = field(default_factory=list)
     # Banned sticker filenames (per-user blacklist)
     banned_stickers: list[str] = field(default_factory=list)
+    # Long-term memory
+    core_facts: list[dict] = field(default_factory=list)  # [{category, content, importance, created_at, last_accessed, access_count}]
+    summaries: list[dict] = field(default_factory=list)    # [{date_range, summary, key_topics, message_count, created_at}]
     # Relationship stage: "new" | "familiar" | "close"
     relationship: str = "new"
     # Chat statistics
@@ -250,6 +253,123 @@ class MemoryStore:
             gaps = gaps[-50:]
         profile.preferences["msg_gaps"] = gaps
         self.save_user(profile)
+
+    # ------------------------------------------------------------------
+    # Long-term memory: Core Facts
+    # ------------------------------------------------------------------
+
+    def add_facts(self, user_id: str, facts: list[dict]):
+        """Merge new facts into core_facts. Facts are [{category, content, importance}]."""
+        profile = self.get_user(user_id)
+        now = time.time()
+        for f in facts:
+            # Dedup: skip if identical content already exists
+            existing = [e for e in profile.core_facts if e["content"] == f["content"]]
+            if existing:
+                existing[0]["last_accessed"] = now
+                existing[0]["access_count"] = existing[0].get("access_count", 0) + 1
+                existing[0]["importance"] = max(existing[0].get("importance", 1), f.get("importance", 5))
+                continue
+            profile.core_facts.append({
+                "category": f.get("category", "personal_info"),
+                "content": f["content"],
+                "importance": f.get("importance", 5),
+                "created_at": now,
+                "last_accessed": now,
+                "access_count": 0,
+            })
+
+        # Trim: keep top 50 by importance
+        if len(profile.core_facts) > 50:
+            profile.core_facts.sort(key=lambda x: x.get("importance", 0), reverse=True)
+            profile.core_facts = profile.core_facts[:50]
+
+        # Consolidate similar facts if > 40
+        if len(profile.core_facts) > 40:
+            profile.core_facts = self._consolidate_facts(profile.core_facts)
+
+        self.save_user(profile)
+
+    def _consolidate_facts(self, facts: list[dict]) -> list[dict]:
+        """Simple dedup by category + first 4 chars of content."""
+        seen = {}
+        for f in facts:
+            key = (f.get("category", ""), f["content"][:4])
+            if key in seen:
+                # Merge: take higher importance, longer content
+                existing = seen[key]
+                if f["importance"] > existing["importance"]:
+                    existing["importance"] = f["importance"]
+                if len(f["content"]) > len(existing["content"]):
+                    existing["content"] = f["content"]
+            else:
+                seen[key] = f
+        return sorted(seen.values(), key=lambda x: x.get("importance", 0), reverse=True)
+
+    def get_context_facts(self, user_id: str, limit: int = 12) -> list[dict]:
+        """Get top facts for LLM context, sorted by importance × recency × access."""
+        profile = self.get_user(user_id)
+        now = time.time()
+        scored = []
+        for f in profile.core_facts:
+            age_days = (now - f.get("created_at", now)) / 86400
+            recency = 1.0 / (1.0 + age_days)  # 0..1, newer = higher
+            importance = f.get("importance", 5) / 10.0
+            accesses = min(f.get("access_count", 0), 10) / 10.0
+            score = importance * 0.5 + recency * 0.3 + accesses * 0.2
+            scored.append((score, f))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [f for _, f in scored[:limit]]
+
+    # ------------------------------------------------------------------
+    # Long-term memory: Summaries
+    # ------------------------------------------------------------------
+
+    def add_summary(self, user_id: str, date_range: str, summary: str,
+                    key_topics: list[str], message_count: int):
+        """Add a conversation batch summary."""
+        profile = self.get_user(user_id)
+        profile.summaries.append({
+            "date_range": date_range,
+            "summary": summary,
+            "key_topics": key_topics,
+            "message_count": message_count,
+            "created_at": time.time(),
+        })
+        # Trim old
+        if len(profile.summaries) > 10:
+            # Compress oldest 7 into 1
+            old = profile.summaries[:-3]  # keep latest 3
+            if len(old) >= 2:
+                compressed = self._compress_summaries(old)
+                profile.summaries = [compressed] + profile.summaries[-3:]
+            else:
+                profile.summaries = profile.summaries[-10:]
+        self.save_user(profile)
+
+    def _compress_summaries(self, old: list[dict]) -> dict:
+        """Merge multiple summaries into one super-summary."""
+        topics = set()
+        total_msgs = 0
+        parts = []
+        for s in old:
+            topics.update(s.get("key_topics", []))
+            total_msgs += s.get("message_count", 0)
+            parts.append(s["summary"])
+        return {
+            "date_range": f"{old[0]['date_range'].split('-')[0]}-{old[-1]['date_range'].split('-')[-1]}",
+            "summary": "；".join(parts),
+            "key_topics": list(topics)[:10],
+            "message_count": total_msgs,
+            "created_at": time.time(),
+        }
+
+    def get_context_summaries(self, user_id: str, limit: int = 3) -> list[dict]:
+        """Get recent summaries for LLM context."""
+        profile = self.get_user(user_id)
+        return profile.summaries[-limit:]
+
+    # ------------------------------------------------------------------
 
     def update_name(self, user_id: str, name: str):
         """Update the user's preferred name."""

@@ -22,6 +22,7 @@ from .ai.persona import build_system_prompt, build_confide_prompt
 from .ai.personas import get_persona
 from .ai.emotion import EmotionEngine
 from .ai.events import EventExtractor, build_followup_context
+from .ai.memory import MemoryManager
 from .memory.store import MemoryStore
 from .stickers.engine import StickerEngine
 from .bot.client import QQClient
@@ -48,12 +49,13 @@ _qq_client: Optional[QQClient] = None
 _qq_adapter: Optional[QQAdapter] = None
 _emotion: Optional[EmotionEngine] = None
 _events: Optional[EventExtractor] = None
+_mem_mgr: Optional[MemoryManager] = None
 _last_sticker_sent: dict[str, str] = {}
 
 # ----------------------------------------------------------------- Lifecycle
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _qq_client, _qq_adapter, _llm, _memory, _stickers, _emotion, _events
+    global _qq_client, _qq_adapter, _llm, _memory, _stickers, _emotion, _events, _mem_mgr
     cfg = load_config()
     logger.info(f"Starting {cfg.bot.bot_name} (QQ: {cfg.bot.bot_qq})")
     _llm = LLMClient(cfg.llm)
@@ -62,6 +64,7 @@ async def lifespan(app: FastAPI):
     _qq_client = QQClient(cfg.napcat)
     _emotion = EmotionEngine()
     _events = EventExtractor(_llm)
+    _mem_mgr = MemoryManager(_llm)
     _qq_adapter = QQAdapter(cfg.napcat, cfg.bot)
     _qq_adapter.on_private_message = handle_private_message
     _qq_adapter.on_friend_add = handle_friend_add
@@ -198,14 +201,27 @@ async def _real_handle_message(user_id: str, message: str):
     if _events: asyncio.create_task(_extract_events(user_id, message))
     reminders = _memory.get_due_reminders(user_id)
     event_ctx = build_followup_context(reminders) if reminders else ""
-    # Prompt + LLM
+    # Prompt + LLM with long-term memory
     prompt = build_system_prompt(cfg.bot.bot_name, user.name or "主人", persona=persona, emotion_context=emotion_ctx, event_context=event_ctx)
+    llm_msgs = [LLMClient.system_message(prompt)]
+    # Tier 2: Core Facts
+    facts = _memory.get_context_facts(user_id)
+    if facts:
+        fact_text = "关于" + (user.name or "对方") + "你记得这些：\n" + "\n".join(f"- {f['content']}" for f in facts)
+        llm_msgs.append(LLMClient.system_message(fact_text))
+    # Tier 3: Summaries
+    summaries = _memory.get_context_summaries(user_id)
+    if summaries:
+        sum_text = "最近的对话概要：\n" + "\n".join(f"- [{s['date_range']}] {s['summary']}" for s in summaries)
+        llm_msgs.append(LLMClient.system_message(sum_text))
     weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
     now = time.localtime()
     time_note = f"[{time.strftime('%Y年%m月%d日', now)} {weekdays[now.tm_wday]} {time.strftime('%H:%M', now)}]"
-    llm_msgs = [LLMClient.system_message(prompt), LLMClient.system_message(f"{time_note} [关系:{user.relationship}] [聊了{user.total_messages}条]")]
+    llm_msgs.append(LLMClient.system_message(f"{time_note} [关系:{user.relationship}] [聊了{user.total_messages}条]"))
     for m in _memory.get_recent_messages(user_id): llm_msgs.append({"role": m["role"], "content": m["content"]})
     llm_msgs.append(LLMClient.user_message(message))
+    # Background: extract facts & summarize (fire-and-forget)
+    asyncio.create_task(_run_memory_tasks(user_id))
     try:
         parts, _ = await _llm.chat_multi(llm_msgs)
     except Exception as e:
@@ -245,6 +261,26 @@ def _extract_name(text):
         m = re.search(p, text)
         if m: return m.group(1).strip()[:10]
     return None
+
+async def _run_memory_tasks(user_id: str):
+    """Background: extract facts and summarize conversations."""
+    global _memory, _mem_mgr
+    if not _memory or not _mem_mgr:
+        return
+    try:
+        recent = _memory.get_recent_messages(user_id, 40)
+        facts = await _mem_mgr.maybe_extract_facts(user_id, recent)
+        if facts:
+            _memory.add_facts(user_id, facts)
+        summary = await _mem_mgr.maybe_summarize(user_id, recent, _memory.get_context_summaries(user_id, 10))
+        if summary:
+            total_msgs = _memory.get_user(user_id).total_messages
+            start = max(0, total_msgs - len(recent))
+            date_range = f"msg{start}-{total_msgs}"
+            _memory.add_summary(user_id, date_range, summary["summary"],
+                               summary.get("key_topics", []), len(recent))
+    except Exception as e:
+        logger.debug(f"Memory tasks skipped: {e}")
 
 async def _extract_events(user_id, msg):
     global _events, _memory
