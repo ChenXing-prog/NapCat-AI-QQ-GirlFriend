@@ -1,6 +1,7 @@
 """AI persona and system prompt builder (v2 — realistic companion)."""
 
 import random
+from datetime import datetime
 from typing import Optional
 from .sticker_meta import STICKER_META, get_all_tags
 from .personas import Persona, get_persona
@@ -95,7 +96,6 @@ def build_proactive_prompt(
     events_text: str = "", emotion_context: str = "",
 ) -> str:
     """Build system prompt for proactive check-ins."""
-    from datetime import datetime
     weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
     today_str = datetime.now().strftime(f"%m月%d日 {weekdays[datetime.now().weekday()]}")
     guidance = {
