@@ -8,7 +8,8 @@ from ..config import get_config
 logger = logging.getLogger(__name__)
 
 # Match [CQ:image,file=...,url=https://...] in QQ messages
-_IMAGE_CQ_RE = re.compile(r"\[CQ:image[^\]]*url=([^\],&]+)")
+# URL can contain & and , so we need to capture up to the closing bracket or comma before the next CQ param
+_IMAGE_CQ_RE = re.compile(r"\[CQ:image[^\]]*url=([^\]\s]+)")
 
 # Match [CQ:image,...] without url (local file)
 _IMAGE_FILE_RE = re.compile(r"\[CQ:image[^\]]*file=([^\],&]+)")
