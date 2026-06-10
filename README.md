@@ -250,6 +250,16 @@ flowchart LR
 ```
 
 ---
+## 示例截图
+<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/67f5dab1-d580-45ad-a196-e09236f0cbca" />
+<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/f1f4b167-2569-4176-9dff-ef0983568cf1" />
+<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/904b1dab-a48e-46b4-b6cf-a87937c44a1f" />
+
+
+
+
+
+---
 
 ## 📄 License
 
