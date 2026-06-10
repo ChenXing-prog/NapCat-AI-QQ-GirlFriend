@@ -40,10 +40,11 @@ class UserProfile:
     # Banned sticker filenames (per-user blacklist)
     banned_stickers: list[str] = field(default_factory=list)
     # Long-term memory
-    core_facts: list[dict] = field(default_factory=list)  # [{category, content, importance, created_at, last_accessed, access_count}]
-    summaries: list[dict] = field(default_factory=list)    # [{date_range, summary, key_topics, message_count, created_at}]
+    core_facts: list[dict] = field(default_factory=list)  # [{subject, category, content, importance, ...}]
+    summaries: list[dict] = field(default_factory=list)    # [{date_range, summary, key_topics, message_count, high_importance, ...}]
     emotion_log: list[dict] = field(default_factory=list)  # [{date, dominant, intensity, note, msg_count}]
     shared_moments: list[dict] = field(default_factory=list)  # [{type, content, created_at, importance, recalled_count}]
+    core_archive: list[dict] = field(default_factory=list)  # [{content, context, emotion, importance, recalled_count, created_at}]
     # Relationship stage: "new" | "familiar" | "close"
     relationship: str = "new"
     # Chat statistics
@@ -310,6 +311,72 @@ class MemoryStore:
         """Get milestone-type moments (for relationship summary)."""
         profile = self.get_user(user_id)
         return [m for m in profile.shared_moments if m.get("type") == "milestone"]
+
+    # ------------------------------------------------------------------
+    # Core archive — permanent memory vault
+    # ------------------------------------------------------------------
+
+    _EMO_GROUPS = {
+        "vulnerable": "soft", "sad": "soft", "anxious": "soft", "tired": "soft",
+        "intimate": "warm", "warm": "warm", "grateful": "warm", "happy": "warm",
+    }
+
+    def add_archive(self, user_id: str, content: str, context: str = "",
+                    emotion: str = "neutral", importance: int = 8):
+        """Add an entry to the permanent memory archive."""
+        profile = self.get_user(user_id)
+        now = time.time()
+        # Dedup: same content updates importance
+        for a in profile.core_archive:
+            if a["content"] == content:
+                a["importance"] = max(a.get("importance", 5), importance)
+                a["recalled_count"] = a.get("recalled_count", 0) + 0  # don't bump on dedup
+                self.save_user(profile)
+                return
+        profile.core_archive.append({
+            "content": content,
+            "context": context,
+            "emotion": emotion,
+            "importance": importance,
+            "recalled_count": 0,
+            "created_at": now,
+        })
+        # Capacity control
+        if len(profile.core_archive) > 100:
+            keep = [a for a in profile.core_archive if a.get("importance", 5) >= 9]
+            recent = profile.core_archive[-20:]
+            rest = [a for a in profile.core_archive if a not in keep and a not in recent]
+            rest.sort(key=lambda x: x.get("importance", 5), reverse=True)
+            profile.core_archive = keep + recent + rest[:max(0, 100 - len(keep) - len(recent))]
+        self.save_user(profile)
+
+    def search_archive(self, user_id: str, query: str = "", emotion_group: str = "",
+                       limit: int = 1) -> list[dict]:
+        """Search archive by keyword and/or emotion group. Skips over-recalled entries."""
+        profile = self.get_user(user_id)
+        candidates = []
+        for a in profile.core_archive:
+            if a.get("recalled_count", 0) >= 5:
+                continue
+            if importance := a.get("importance", 5) < 8 and query:
+                continue  # keyword search only for important memories
+            match = True
+            if query:
+                match = query in a.get("content", "") or query in a.get("context", "")
+            if emotion_group:
+                emo = a.get("emotion", "")
+                if self._EMO_GROUPS.get(emo) != emotion_group:
+                    match = False
+            if match:
+                candidates.append(a)
+        candidates.sort(key=lambda x: x.get("importance", 5), reverse=True)
+        import random
+        return random.sample(candidates, min(limit, len(candidates))) if candidates else []
+
+    def get_archive_by_emotion(self, user_id: str, emotion: str, limit: int = 1) -> list[dict]:
+        """Get archive entries matching an emotion group."""
+        group = self._EMO_GROUPS.get(emotion)
+        return self.search_archive(user_id, emotion_group=group, limit=limit) if group else []
 
     # ------------------------------------------------------------------
     # Adaptive message gap tracking

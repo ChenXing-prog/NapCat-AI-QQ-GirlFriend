@@ -155,6 +155,8 @@ async def _handle_confide_reply(user_id: str, combined: str):
         await _qq_client.send_private_msg(user_id, "唔...刚才走神了，你再说一遍好不好～")
         return
     _memory.add_message(user_id, "user", combined)
+    # Archive confide content (importance=10, emotion estimated)
+    _memory.add_archive(user_id, combined[:500], "倾诉模式", "vulnerable", 10)
     combined_text = " ||| ".join(p.get("content", "") for p in parts if p.get("type") in ("text", "sticker_end"))
     _memory.add_message(user_id, "assistant", combined_text)
     banned = _memory.get_banned_stickers(user_id)
@@ -245,12 +247,39 @@ async def _real_handle_message(user_id: str, message: str):
         trend = "在好转" if emotions[-1].get("dominant","") not in ("sad","anxious","angry") else "需要注意"
         emo_text = "最近心情：" + " → ".join(f"{e['date'][-5:]}({e.get('note','')})" for e in emotions) + f"，整体{trend}"
         llm_msgs.append(LLMClient.system_message(emo_text))
-    # Shared moment (20% chance, natural recall)
-    if random.random() < 0.2:
+    # Shared moment (base 20%, boosted at special times)
+    recall_prob = 0.2
+    now_hour = time.localtime().tm_hour
+    is_late = now_hour >= 23 or now_hour < 6
+    if is_late:
+        recall_prob = 0.4
+    if random.random() < recall_prob:
         moment = _memory.get_random_moment(user_id)
         if moment:
+            ts = moment.get("created_at", 0)
+            time_str = time.strftime("%m月%d日", time.localtime(ts)) if ts else ""
             llm_msgs.append(LLMClient.system_message(
-                f"[可以自然地提起：{moment['content']}。不要刻意，顺势说一下就好。]"))
+                f"[可以自然地提起：{time_str}，{moment['content']}。不要刻意，顺势说一下就好。]"))
+    # Archive trigger: keyword match
+    archive_msg = None
+    if not archive_msg:
+        archive_msg = _memory.search_archive(user_id, query=message[:50], limit=1)
+    # Archive trigger: emotion resonance (30%)
+    if not archive_msg and random.random() < 0.3:
+        today_emo = _memory.get_emotion_trajectory(user_id, 1)
+        if today_emo:
+            archive_msg = _memory.get_archive_by_emotion(user_id, today_emo[0].get("dominant",""), limit=1)
+    # Archive trigger: late night boost
+    if not archive_msg and is_late and random.random() < 0.5:
+        archive_msg = _memory.search_archive(user_id, limit=1)
+    if archive_msg:
+        a = archive_msg[0]
+        ts = a.get("created_at", 0)
+        time_str = time.strftime("%m月%d日", time.localtime(ts)) if ts else ""
+        llm_msgs.append(LLMClient.system_message(
+            f"[可以自然地提起一段回忆：{time_str}，他说\"{a['content'][:100]}\"。用你自己的话转述，不要原样照搬。]"))
+        a["recalled_count"] = a.get("recalled_count", 0) + 1
+        _memory.save_user(_memory.get_user(user_id))
     weekdays = ["周一","周二","周三","周四","周五","周六","周日"]
     now = time.localtime()
     time_note = f"[{time.strftime('%Y年%m月%d日', now)} {weekdays[now.tm_wday]} {time.strftime('%H:%M', now)}]"
@@ -309,22 +338,26 @@ async def _run_memory_tasks(user_id: str):
         facts = await _mem_mgr.maybe_extract_facts(user_id, recent, _memory)
         if facts:
             _memory.add_facts(user_id, facts)
-        summary = await _mem_mgr.maybe_summarize(user_id, recent, _memory.get_context_summaries(user_id, 10), _memory)
+        summary, archives = await _mem_mgr.maybe_summarize(user_id, recent, _memory.get_context_summaries(user_id, 10), _memory)
         if summary:
             total_msgs = _memory.get_user(user_id).total_messages
             start = max(0, total_msgs - len(recent))
             date_range = f"msg{start}-{total_msgs}"
             _memory.add_summary(user_id, date_range, summary["summary"],
-                               summary.get("key_topics", []), len(recent))
+                               summary.get("key_topics", []), len(recent), summary.get("high_importance", False))
+        for a in archives:
+            _memory.add_archive(user_id, a.get("content",""), a.get("context",""), a.get("emotion","neutral"), a.get("importance",8))
         # Daily emotion log + shared moments (once per N messages)
         total = _memory.get_user(user_id).total_messages
         if total % 15 == 0:
             emo = await _mem_mgr.log_daily_emotion(user_id, recent, _emotion)
             if emo:
                 _memory.log_emotion(user_id, emo["dominant"], emo["intensity"], emo["note"], emo["msg_count"])
-            moments = await _mem_mgr.extract_moments(user_id, recent, total)
+            moments, m_archives = await _mem_mgr.extract_moments(user_id, recent, total)
             for m in moments:
                 _memory.add_moment(user_id, m.get("type", "memorable"), m["content"], m.get("importance", 5))
+            for a in m_archives:
+                _memory.add_archive(user_id, a.get("content",""), a.get("context",""), a.get("emotion","neutral"), a.get("importance",8))
     except Exception as e:
         logger.debug(f"Memory tasks skipped: {e}")
 
