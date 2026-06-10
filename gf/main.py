@@ -174,6 +174,8 @@ async def _handle_confide_reply(user_id: str, combined: str):
             if ptype == "sticker_end":
                 await asyncio.sleep(random.uniform(0.3, 1.0))
                 await _send_sticker(part["tag"], user_id, banned)
+    # Background memory extraction for confide content
+    asyncio.create_task(_run_memory_tasks(user_id))
 
 
 async def _real_handle_message(user_id: str, message: str):
