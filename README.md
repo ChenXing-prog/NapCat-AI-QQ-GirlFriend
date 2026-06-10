@@ -251,13 +251,9 @@ flowchart LR
 
 ---
 ## 示例截图
-<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/67f5dab1-d580-45ad-a196-e09236f0cbca" />
-<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/f1f4b167-2569-4176-9dff-ef0983568cf1" />
-<img width="1200" height="2670" alt="Screenshot_2026-06-10-10-44-07-632_com tencent mo" src="https://github.com/user-attachments/assets/904b1dab-a48e-46b4-b6cf-a87937c44a1f" />
-
-
-
-
+<img width="338" height="757" alt="image" src="https://github.com/user-attachments/assets/9e751747-7c3c-48cc-bb54-e5b460fd1f13" />
+<img width="261" height="753" alt="image" src="https://github.com/user-attachments/assets/8f7738d5-5ec1-461f-9b23-d794874347c0" />
+<img width="415" height="753" alt="image" src="https://github.com/user-attachments/assets/d215ba9a-97c1-4748-b87b-e4eb31f739a0" />
 
 ---
 
