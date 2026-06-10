@@ -23,25 +23,36 @@ def is_image_message(message: str) -> bool:
 
 
 async def describe_image(file_id: str) -> str | None:
-    """Read image via NapCat get_file (gets local path), send to vision model."""
+    """Read image via NapCat get_file, send to vision model."""
     cfg = get_config()
     try:
-        # Step 1: Get local file path from NapCatQQ
-        async with httpx.AsyncClient(timeout=10) as http:
+        # Step 1: Get file info from NapCatQQ
+        async with httpx.AsyncClient(timeout=30) as http:
             resp = await http.post(
                 f"{cfg.napcat.base_url}/get_file",
                 json={"file_id": file_id},
             )
             data = resp.json()
             if data.get("status") != "ok":
-                logger.warning(f"NapCat get_file failed for {file_id}: {data}")
+                logger.warning(f"NapCat get_file failed for {file_id}")
                 return None
-            local_path = data.get("data", {}).get("file", "")
-            if not local_path:
-                return None
+            info = data.get("data", {})
+            local_path = info.get("file", "")
 
-        # Step 2: Read local file, resize, encode
-        img = Image.open(local_path)
+        # Step 2: Try local file first, fall back to fresh URL
+        import os
+        if local_path and os.path.exists(local_path):
+            img = Image.open(local_path)
+        else:
+            fresh_url = info.get("url", "")
+            if not fresh_url:
+                return None
+            async with httpx.AsyncClient(timeout=30) as http:
+                img_resp = await http.get(fresh_url)
+                img_data = img_resp.content
+            img = Image.open(io.BytesIO(img_data))
+
+        # Step 3: Resize and encode
         if img.width > 800:
             ratio = 800 / img.width
             img = img.resize((800, int(img.height * ratio)), Image.LANCZOS)
@@ -51,7 +62,7 @@ async def describe_image(file_id: str) -> str | None:
         img.save(buf, format="JPEG", quality=80)
         b64 = base64.b64encode(buf.getvalue()).decode()
 
-        # Step 3: Vision API
+        # Step 4: Vision API
         client = AsyncOpenAI(api_key=cfg.llm.api_key, base_url=cfg.llm.base_url)
         resp = await client.chat.completions.create(
             model=cfg.llm.vision_model,
