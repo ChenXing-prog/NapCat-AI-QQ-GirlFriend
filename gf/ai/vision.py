@@ -23,28 +23,25 @@ def is_image_message(message: str) -> bool:
 
 
 async def describe_image(file_id: str) -> str | None:
-    """Download image via NapCat get_file, send to vision model."""
+    """Read image via NapCat get_file (gets local path), send to vision model."""
     cfg = get_config()
     try:
-        # Step 1: Get base64 from NapCatQQ
-        async with httpx.AsyncClient(timeout=30) as http:
+        # Step 1: Get local file path from NapCatQQ
+        async with httpx.AsyncClient(timeout=10) as http:
             resp = await http.post(
                 f"{cfg.napcat.base_url}/get_file",
                 json={"file_id": file_id},
             )
             data = resp.json()
-            if data.get("status") != "ok" or not data.get("data"):
+            if data.get("status") != "ok":
                 logger.warning(f"NapCat get_file failed for {file_id}: {data}")
                 return None
-            file_data = data["data"]
-            # file_data might be base64 string or raw bytes
-            if isinstance(file_data, str):
-                img_bytes = base64.b64decode(file_data)
-            else:
-                img_bytes = file_data
+            local_path = data.get("data", {}).get("file", "")
+            if not local_path:
+                return None
 
-        # Step 2: Resize and encode for vision API
-        img = Image.open(io.BytesIO(img_bytes))
+        # Step 2: Read local file, resize, encode
+        img = Image.open(local_path)
         if img.width > 800:
             ratio = 800 / img.width
             img = img.resize((800, int(img.height * ratio)), Image.LANCZOS)
