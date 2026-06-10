@@ -19,16 +19,25 @@ _SEARCH_JUDGE_PROMPT = """判断用户消息是否需要联网搜索才能准确
 只回复 SEARCH:xxx 或 NONE，不要其他文字。"""
 
 
-async def should_search(message: str) -> str | None:
-    """Light LLM call to decide if web search is needed. Returns query or None."""
+async def should_search(message: str, context: list[str] = None) -> str | None:
+    """Light LLM call to decide if web search is needed. Returns query or None.
+
+    Args:
+        message: Current user message
+        context: Recent conversation messages for context (max 5)
+    """
     cfg = get_config()
     client = AsyncOpenAI(api_key=cfg.llm.api_key, base_url=cfg.llm.base_url)
+    user_content = message[:500]
+    if context:
+        ctx = "\n".join(f"- {m[:120]}" for m in context[-5:])
+        user_content = f"对话上下文：\n{ctx}\n\n最新消息：{message[:500]}"
     try:
         resp = await client.chat.completions.create(
             model="moonshot-v1-8k",
             messages=[
                 {"role": "system", "content": _SEARCH_JUDGE_PROMPT},
-                {"role": "user", "content": message[:500]},
+                {"role": "user", "content": user_content},
             ],
             max_tokens=30,
             temperature=0,
@@ -81,9 +90,9 @@ def format_results(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
-async def maybe_search(message: str) -> str | None:
-    """Full pipeline: judge → search → format. Returns context string or None."""
-    query = await should_search(message)
+async def maybe_search(message: str, context: list[str] = None) -> str | None:
+    """Full pipeline: judge (with context) → search → format."""
+    query = await should_search(message, context)
     if not query:
         return None
     results = await search_web(query)

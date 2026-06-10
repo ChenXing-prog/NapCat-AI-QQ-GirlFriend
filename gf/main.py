@@ -202,8 +202,9 @@ async def _real_handle_message(user_id: str, message: str):
     if _events: asyncio.create_task(_extract_events(user_id, message))
     reminders = _memory.get_due_reminders(user_id)
     event_ctx = build_followup_context(reminders) if reminders else ""
-    # Web search (auto-detect, inject results if needed)
-    search_ctx = await maybe_search(message)
+    # Web search (with recent conversation context for better queries)
+    recent_msgs = [m["content"] for m in _memory.get_recent_messages(user_id, 6)]
+    search_ctx = await maybe_search(message, recent_msgs)
     if search_ctx:
         logger.info(f"Search results injected for {user_id}")
 
