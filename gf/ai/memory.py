@@ -1,10 +1,57 @@
-"""Long-term memory — fact extraction, summarization, emotion logging, shared moments."""
+"""Long-term memory — fact extraction, summarization, emotion logging, shared moments.
+
+All LLM calls use moonshot-v1-8k (temperature=0) for stable JSON output.
+"""
 
 import logging
+import json
 import random
+from openai import AsyncOpenAI
 from .llm import LLMClient
 
 logger = logging.getLogger(__name__)
+
+# Lightweight client for structured extraction (stable JSON, cheap, fast)
+_LITE_MODEL = "moonshot-v1-8k"
+_LITE_CLIENT = None  # initialized lazily
+
+
+def _get_lite_client() -> AsyncOpenAI:
+    global _LITE_CLIENT
+    if _LITE_CLIENT is None:
+        from ..config import get_config
+        cfg = get_config()
+        _LITE_CLIENT = AsyncOpenAI(api_key=cfg.llm.api_key, base_url=cfg.llm.base_url)
+    return _LITE_CLIENT
+
+
+async def _lite_chat(system_prompt: str, user_content: str, max_tokens: int = 200) -> str:
+    """Call moonshot-v1-8k with temperature=0 for stable structured output."""
+    client = _get_lite_client()
+    resp = await client.chat.completions.create(
+        model=_LITE_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content},
+        ],
+        max_tokens=max_tokens,
+        temperature=0,
+    )
+    return resp.choices[0].message.content.strip()
+
+
+def _parse_json(text: str) -> dict:
+    """Robust JSON extraction from LLM output."""
+    text = text.strip()
+    if "```json" in text:
+        text = text.split("```json")[1].split("```")[0]
+    elif "```" in text:
+        text = text.split("```")[1].split("```")[0]
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start >= 0 and end > start:
+        return json.loads(text[start:end])
+    return {}
 
 EXTRACT_FACTS_PROMPT = """你是一个记忆提取器。阅读以下对话片段，从中提取关于用户的**关键事实**。
 
@@ -76,7 +123,7 @@ class MemoryManager:
 
     async def maybe_extract_facts(self, user_id: str, recent_messages: list[dict],
                                    store) -> list[dict]:
-        """Extract facts if enough new messages accumulated (every ~25 msgs)."""
+        """Extract facts using stable moonshot-v1-8k (temperature=0)."""
         val = self._inc_counter(store, user_id, "mem_fact_counter")
         if val < 25:
             return []
@@ -88,17 +135,8 @@ class MemoryManager:
             for m in recent_messages[-30:]
         )
         try:
-            msgs = [
-                LLMClient.system_message(EXTRACT_FACTS_PROMPT),
-                LLMClient.user_message(conversation[:3000]),
-            ]
-            reply, _ = await self._llm.chat(msgs)
-            import json
-            if "```" in reply:
-                reply = reply.split("```")[1].split("```")[0]
-                if reply.startswith("json"):
-                    reply = reply[4:]
-            data = json.loads(reply.strip())
+            raw = await _lite_chat(EXTRACT_FACTS_PROMPT, conversation[:3000], max_tokens=400)
+            data = _parse_json(raw)
             facts = data.get("facts", [])
             if facts:
                 logger.info(f"Extracted {len(facts)} facts for {user_id}")
@@ -109,7 +147,7 @@ class MemoryManager:
 
     async def maybe_summarize(self, user_id: str, recent_messages: list[dict],
                               existing_summaries: list[dict], store) -> dict | None:
-        """Summarize if enough messages accumulated (every ~30 msgs)."""
+        """Summarize using stable moonshot-v1-8k (temperature=0)."""
         val = self._inc_counter(store, user_id, "mem_summary_counter")
         if val < 30:
             return None
@@ -121,18 +159,10 @@ class MemoryManager:
             for m in recent_messages[-40:]
         )
         try:
-            msgs = [
-                LLMClient.system_message(SUMMARIZE_PROMPT),
-                LLMClient.user_message(conversation[:4000]),
-            ]
-            reply, _ = await self._llm.chat(msgs)
-            import json
-            if "```" in reply:
-                reply = reply.split("```")[1].split("```")[0]
-                if reply.startswith("json"):
-                    reply = reply[4:]
-            data = json.loads(reply.strip())
-            logger.info(f"Summarized conversation for {user_id}: {data.get('key_topics', [])}")
+            raw = await _lite_chat(SUMMARIZE_PROMPT, conversation[:4000], max_tokens=300)
+            data = _parse_json(raw)
+            if data.get("summary"):
+                logger.info(f"Summarized for {user_id}: {data.get('key_topics', [])}")
             return data
         except Exception as e:
             logger.debug(f"Summarization skipped: {e}")
@@ -144,7 +174,7 @@ class MemoryManager:
 
     async def log_daily_emotion(self, user_id: str, recent_messages: list[dict],
                                 emotion_engine) -> None:
-        """Summarize today's emotional trajectory and store it."""
+        """Summarize today's emotional trajectory using stable moonshot-v1-8k."""
         from datetime import date
         today = date.today().isoformat()
         user_msgs = [m["content"] for m in recent_messages[-50:] if m["role"] == "user"]
@@ -152,22 +182,15 @@ class MemoryManager:
             return
         try:
             combined = "\n".join(msg[:120] for msg in user_msgs[-20:])
-            msgs = [
-                LLMClient.system_message("总结用户今天的整体情绪。只输出JSON：{\"dominant\":\"happy|sad|anxious|excited|tired|neutral\",\"note\":\"一句话总结（15字内）\"}"),
-                LLMClient.user_message(combined[:2000]),
-            ]
-            reply, _ = await self._llm.chat(msgs)
-            import json
-            if "```" in reply:
-                reply = reply.split("```")[1].split("```")[0]
-            data = json.loads(reply.strip())
-            # Get emotion intensity from engine if available
+            raw = await _lite_chat(
+                "总结用户今天的整体情绪。只输出JSON：{\"dominant\":\"happy|sad|anxious|excited|tired|neutral\",\"note\":\"一句话总结（15字内）\"}",
+                combined[:2000], max_tokens=80,
+            )
+            data = _parse_json(raw)
             traj = emotion_engine.get_trajectory(user_id) if emotion_engine else None
             intensity = traj.mood_stability if traj else 0.5
             dominant = data.get("dominant", "neutral")
             note = data.get("note", "")
-            from ..memory.store import MemoryStore
-            # Will be called from main where _memory is available
             logger.info(f"Emotion log [{today}]: {dominant} — {note}")
             return {"dominant": dominant, "intensity": intensity, "note": note, "msg_count": len(user_msgs)}
         except Exception as e:
@@ -180,12 +203,11 @@ class MemoryManager:
 
     async def extract_moments(self, user_id: str, recent_messages: list[dict],
                                total_msgs: int) -> list[dict]:
-        """Scan today's conversation for memorable shared moments."""
+        """Scan conversation for shared moments using stable moonshot-v1-8k."""
         conversation = "\n".join(
             f"{'👤' if m['role'] == 'user' else '🤖'}: {m['content'][:100]}"
             for m in recent_messages[-40:]
         )
-        # Milestone auto-detection
         milestones = []
         if total_msgs in (100, 200, 500, 1000, 2000):
             milestones.append({
@@ -193,19 +215,14 @@ class MemoryManager:
                 "importance": 9 if total_msgs >= 500 else 7,
             })
         try:
-            msgs = [
-                LLMClient.system_message("扫描对话，提取值得记住的'我们之间的瞬间'。比如：深夜聊天、一起吐槽、对方倾诉了心事、共同喜欢的东西。只输出JSON：{\"moments\":[{\"content\":\"...\",\"importance\":1-10}]}。没有就输出空列表。"),
-                LLMClient.user_message(conversation[:3000]),
-            ]
-            reply, _ = await self._llm.chat(msgs)
-            import json
-            if "```" in reply:
-                reply = reply.split("```")[1].split("```")[0]
-            data = json.loads(reply.strip())
+            raw = await _lite_chat(
+                "扫描对话，提取值得记住的共同瞬间。只输出JSON：{\"moments\":[{\"content\":\"...\",\"importance\":1-10}]}",
+                conversation[:3000], max_tokens=300,
+            )
+            data = _parse_json(raw)
             for m in data.get("moments", []):
                 milestones.append({
-                    "type": m.get("type", "memorable"),
-                    "content": m["content"],
+                    "type": "memorable", "content": m["content"],
                     "importance": m.get("importance", 5),
                 })
         except Exception as e:
