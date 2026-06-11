@@ -152,7 +152,12 @@ async def _handle_command_direct(user_id: str, message: str):
     user = _memory.get_user(user_id)
 
     if is_menu_command(message):
-        await _qq_client.send_private_msg(user_id, _MENU_TEXT)
+        user = _memory.get_user(user_id)
+        role = user.preferences.get("role", "normal")
+        role_display = {"admin": "管理员", "vip": "VIP用户", "normal": "普通用户"}.get(role, role)
+        limits = {"admin": (999, 999), "vip": (60, 20), "normal": (20, 3)}.get(role, (20, 3))
+        header = f"你的等级：{role_display}（{limits[0]}条/时 {limits[1]}图/时）\n\n"
+        await _qq_client.send_private_msg(user_id, header + _MENU_TEXT)
         return
 
     if is_user_mgmt_command(message):
