@@ -391,7 +391,9 @@ class ProactiveScheduler:
         await asyncio.sleep(delay)
 
         # Send the message
+        logger.info(f"Sending proactive to {user_id}: {reply[:60]}...")
         await self._qq.send_private_msg(user_id, reply)
+        logger.info(f"Proactive sent OK to {user_id}")
         self._memory.add_message(user_id, "assistant", reply)
 
         # Send sticker if tagged
