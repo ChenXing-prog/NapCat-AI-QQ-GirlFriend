@@ -1,0 +1,208 @@
+{
+  "user_id": "locomo_Melanie_0",
+  "name": "",
+  "persona_id": "gentle",
+  "preferences": {},
+  "recent_messages": [
+    {
+      "role": "assistant",
+      "content": "Thanks, Melanie! Really glad to have you as a friend to share my journey. You're awesome!",
+      "time": 1781138827.4387379
+    },
+    {
+      "role": "assistant",
+      "content": "Thanks, Caroline! Appreciate your friendship. It's great to have a supporter!",
+      "time": 1781138827.4389188
+    },
+    {
+      "role": "assistant",
+      "content": "No worries, Mel! Your friendship means so much to me. Enjoy your day!",
+      "time": 1781138827.4390998
+    },
+    {
+      "role": "assistant",
+      "content": "Hey Caroline, hope all's good! I had a quiet weekend after we went camping with my fam two weekends ago. It was great to unplug and hang with the kids. What've you been up to? Anything fun over the weekend?",
+      "time": 1781138827.4392908
+    },
+    {
+      "role": "assistant",
+      "content": "Hey Melanie! That sounds great! Last weekend I joined a mentorship program for LGBTQ youth - it's really rewarding to help the community.",
+      "time": 1781138827.439481
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline! It's great that you're helping out. How's it going? Got any cool experiences you can share?",
+      "time": 1781138827.4396958
+    },
+    {
+      "role": "assistant",
+      "content": "The mentoring is going great! I've met some amazing young folks and supported them along the way. It's inspiring to see how resilient and strong they are.",
+      "time": 1781138827.439896
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline, that sounds super rewarding! Young people's resilience is amazing. Care to share some stories?",
+      "time": 1781138827.440099
+    },
+    {
+      "role": "assistant",
+      "content": "I mentor a transgender teen just like me. We've been working on building up confidence and finding positive strategies, and it's really been paying off! We had a great time at the LGBT pride event last month.",
+      "time": 1781138827.4403079
+    },
+    {
+      "role": "assistant",
+      "content": "Caroline, awesome news that you two are getting along! What was it like for you both? Care to fill me in?",
+      "time": 1781138827.44052
+    },
+    {
+      "role": "assistant",
+      "content": "The pride event was awesome! It was so encouraging to be surrounded by so much love and acceptance.",
+      "time": 1781138827.440728
+    },
+    {
+      "role": "assistant",
+      "content": "Wow! What's the best part you remember from it?",
+      "time": 1781138827.440982
+    },
+    {
+      "role": "assistant",
+      "content": "Seeing my mentee's face light up when they saw the support was the best! Such a special moment.",
+      "time": 1781138827.441201
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline! They must have felt so appreciated. It's awesome to see the difference we can make in each other's lives. Any other exciting LGBTQ advocacy stuff coming up?",
+      "time": 1781138827.4414191
+    },
+    {
+      "role": "assistant",
+      "content": "Yay! Next month I'm having an LGBTQ art show with my paintings - can't wait!",
+      "time": 1781138827.4416509
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline, that sounds awesome! Can't wait to see your art - got any previews?",
+      "time": 1781138827.441878
+    },
+    {
+      "role": "assistant",
+      "content": "Check out my painting for the art show! Hope you like it.",
+      "time": 1781138827.442106
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline, that painting is awesome! Those colors are so vivid and the whole thing looks really unified. What inspired you?",
+      "time": 1781138827.442336
+    },
+    {
+      "role": "assistant",
+      "content": "Thanks, Melanie! I painted this after I visited a LGBTQ center. I wanted to capture everyone's unity and strength.",
+      "time": 1781138827.4425669
+    },
+    {
+      "role": "assistant",
+      "content": "Wow, Caroline! It really conveys unity and strength - such a gorgeous piece! My kids and I just finished another painting like our last one.",
+      "time": 1781138827.442805
+    }
+  ],
+  "events": [],
+  "banned_stickers": [],
+  "core_facts": [
+    {
+      "subject": "user",
+      "category": "friendship",
+      "content": "Expressed appreciation for Melanie and Caroline's friendship.",
+      "importance": 8,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "weekend activities",
+      "content": "Spent a quiet weekend after camping with family two weekends ago.",
+      "importance": 7,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "community involvement",
+      "content": "Joined a mentorship program for LGBTQ youth.",
+      "importance": 9,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "mentoring experience",
+      "content": "Mentoring a transgender teen and working on building confidence and positive strategies.",
+      "importance": 10,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "pride event",
+      "content": "Attended a pride event and found it encouraging and supportive.",
+      "importance": 8,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "art",
+      "content": "Planning an LGBTQ art show with personal paintings.",
+      "importance": 9,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "inspiration",
+      "content": "Inspired by a LGBTQ center visit to capture unity and strength in a painting.",
+      "importance": 7,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    },
+    {
+      "subject": "user",
+      "category": "family activity",
+      "content": "Finished a painting with kids similar to a previous one.",
+      "importance": 6,
+      "created_at": 1781138833.112719,
+      "last_accessed": 1781138833.112719,
+      "access_count": 0
+    }
+  ],
+  "summaries": [
+    {
+      "date_range": "batch1",
+      "summary": "这段对话是关于两位朋友Caroline和Melanie分享他们的生活经历和对LGBTQ社区的贡献。Caroline提到她参加了一个LGBTQ青年的导师计划，并发现这非常有意义。她分享了她与一个跨性别青少年一起工作的经历，以及他们在建立自信和寻找积极策略方面取得的进展。她还提到了参加一个骄傲活动，看到她的学员在看到支持时脸上的光芒，这是一个特别的时刻。此外，Caroline还提到她将举办一个LGBTQ艺术展，并分享了她的一幅画作，这幅画作受到了LGBTQ中心的启发，旨在捕捉大家的团结和力量。Melanie对Caroline的画作表示赞赏，并提到她和孩子们也完成了一幅类似的画作。",
+      "key_topics": [
+        "友谊",
+        "LGBTQ社区",
+        "导师计划",
+        "骄傲活动",
+        "艺术展",
+        "画作"
+      ],
+      "message_count": 20,
+      "high_importance": false,
+      "created_at": 1781138845.671695
+    }
+  ],
+  "emotion_log": [],
+  "shared_moments": [],
+  "relationship": "familiar",
+  "first_chat": 1781138827.346612,
+  "total_messages": 419,
+  "created_at": 1781138827.346612,
+  "updated_at": 1781138845.671699
+}

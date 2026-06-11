@@ -6,6 +6,7 @@ All LLM calls use moonshot-v1-8k (temperature=0) for stable JSON output.
 import logging
 import json
 import random
+from typing import Optional, Tuple
 from openai import AsyncOpenAI
 from .llm import LLMClient
 
@@ -67,15 +68,26 @@ def _parse_json(text: str) -> dict:
 
 EXTRACT_FACTS_PROMPT = """你是一个记忆提取器。阅读以下对话片段，提取**双向**的关键事实。
 
-## 需要提取的信息
+## 需要提取的信息（按类型）
 
-**关于用户**：
-- 个人信息、偏好、人际关系、健康、学业/工作、经历、习惯
+**profile — 身份信息**：
+- 名字、年龄、生日、学校、专业、城市、宠物
 
-**关于我（AI女友）**：
-- 我分享了关于自己的事（我的生活、我的感受、我的经历）
-- 我做出了承诺（"我会帮你复习""我明天叫你起床"）
-- 我表达了重要的感受
+**preference — 喜好/厌恶**：
+- 喜欢/不喜欢什么（食物、音乐、游戏、动漫、运动、学习方式）
+- "我喜欢FPS游戏""我讨厌香菜"
+
+**event — 发生的事**：
+- 值得记住的事件（考试、面试、旅行、去了哪里、见了谁）
+- "6月10日去了漫展""明天有面试"
+
+**behavior — 行为模式**：
+- 习惯性的行为（作息、语言习惯、社交模式）
+- "总是在凌晨发消息""说话爱用省略号"
+
+**relationship — 人际关系**：
+- 家人、朋友、恋人、同事的关系状态
+- "和妈妈关系紧张""有个妹妹在读高中"
 
 ## 输出格式
 
@@ -84,9 +96,11 @@ EXTRACT_FACTS_PROMPT = """你是一个记忆提取器。阅读以下对话片段
 ```json
 {
   "facts": [
-    {"subject": "user", "category": "preferences", "content": "用户喜欢FPS游戏", "importance": 8},
-    {"subject": "me", "category": "self_disclosure", "content": "我告诉用户我的设计项目快做完了", "importance": 6},
-    {"subject": "me", "category": "promise", "content": "我答应明天早上叫用户起床", "importance": 9}
+    {"type": "preference", "subject": "user", "content": "用户喜欢FPS游戏", "importance": 8},
+    {"type": "profile", "subject": "user", "content": "用户大三，计算机系", "importance": 9},
+    {"type": "behavior", "subject": "user", "content": "用户总是在凌晨发消息", "importance": 5},
+    {"type": "event", "subject": "me", "content": "我告诉用户我的设计项目快做完了", "importance": 6},
+    {"type": "relationship", "subject": "user", "content": "用户和妈妈关系紧张", "importance": 8}
   ]
 }
 ```"""
@@ -167,7 +181,7 @@ class MemoryManager:
             return []
 
     async def maybe_summarize(self, user_id: str, recent_messages: list[dict],
-                              existing_summaries: list[dict], store) -> tuple[dict | None, list[dict]]:
+                              existing_summaries: list[dict], store) -> Tuple[Optional[dict], list[dict]]:
         """Summarize using stable moonshot-v1-8k (temperature=0).
 
         Returns (summary_data_or_None, archive_entries_list).

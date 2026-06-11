@@ -279,20 +279,26 @@ async def _real_handle_message(user_id: str, message: str):
             time_str = time.strftime("%m月%d日", time.localtime(ts)) if ts else ""
             llm_msgs.append(LLMClient.system_message(
                 f"[可以自然地提起：{time_str}，{moment['content']}。不要刻意，顺势说一下就好。]"))
-    # Archive trigger: keyword match
+    # Archive trigger: keyword match (with query rewriting + LLM ranking)
     archive_msg = None
     if not archive_msg:
-        archive_msg = _memory.search_archive(user_id, query=message[:50], limit=1)
+        candidates = _memory.search_archive(user_id, query=message[:50], limit=5)
+        if candidates:
+            archive_msg = await _rank_archive(candidates, message)
     # Archive trigger: emotion resonance (30%)
     if not archive_msg and random.random() < 0.3:
         today_emo = _memory.get_emotion_trajectory(user_id, 1)
         if today_emo:
-            archive_msg = _memory.get_archive_by_emotion(user_id, today_emo[0].get("dominant",""), limit=1)
+            candidates = _memory.get_archive_by_emotion(user_id, today_emo[0].get("dominant",""), limit=5)
+            if candidates:
+                archive_msg = await _rank_archive(candidates, message)
     # Archive trigger: late night boost
     if not archive_msg and is_late and random.random() < 0.5:
-        archive_msg = _memory.search_archive(user_id, limit=1)
+        candidates = _memory.search_archive(user_id, limit=5)
+        if candidates:
+            archive_msg = await _rank_archive(candidates, message)
     if archive_msg:
-        a = archive_msg[0]
+        a = archive_msg[0] if isinstance(archive_msg, list) else archive_msg
         ts = a.get("created_at", 0)
         time_str = time.strftime("%m月%d日", time.localtime(ts)) if ts else ""
         llm_msgs.append(LLMClient.system_message(
@@ -325,6 +331,26 @@ async def _real_handle_message(user_id: str, message: str):
             text = part.get("content", "")
             if text: await _qq_client.send_private_msg(user_id, text)
             if ptype == "sticker_end": await asyncio.sleep(random.uniform(0.3, 1.0)); await _send_sticker(part["tag"], user_id, banned)
+
+async def _rank_archive(candidates: list[dict], user_msg: str) -> list[dict]:
+    """Use lightweight LLM to pick the most relevant archive entry from top 5."""
+    if len(candidates) <= 1:
+        return candidates
+    try:
+        items = "\n".join(f"{i+1}. {a['content'][:100]}" for i, a in enumerate(candidates[:5]))
+        from .ai.memory import _lite_chat, _parse_json
+        raw = await _lite_chat(
+            "用户说了一句话。从候选中选最相关的一条回复序号。只输出JSON：{\"best\": 1}",
+            f"用户：{user_msg[:200]}\n候选：\n{items}", 30,
+        )
+        data = _parse_json(raw)
+        idx = int(data.get("best", 1)) - 1
+        if 0 <= idx < len(candidates):
+            return [candidates[idx]]
+    except Exception:
+        pass
+    return [candidates[0]]  # Fallback to highest scored
+
 
 async def _send_sticker(tag: str, user_id: str, banned: set) -> bool:
     global _stickers, _qq_client

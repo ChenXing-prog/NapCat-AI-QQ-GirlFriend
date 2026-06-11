@@ -290,7 +290,7 @@ class MemoryStore:
             profile.shared_moments = profile.shared_moments[-50:]
         self.save_user(profile)
 
-    def get_random_moment(self, user_id: str) -> dict | None:
+    def get_random_moment(self, user_id: str) -> Optional[dict]:
         """Get a mostly-unrecalled moment for natural reference."""
         import random
         profile = self.get_user(user_id)
@@ -354,34 +354,37 @@ class MemoryStore:
         return base * decay * recall_bonus
 
     def search_archive(self, user_id: str, query: str = "", emotion_group: str = "",
-                       limit: int = 1) -> list[dict]:
-        """Search archive with attenuation filter. Only scans last 500 entries."""
+                       limit: int = 5) -> list[dict]:
+        """Search archive with query rewriting + attenuation filter. Returns top 5."""
         import json, random
         path = self._archive_path(user_id)
         if not path.exists():
             return []
+        # Rewrite query for better matching
+        search_query = self._rewrite_query(query) if query else ""
         candidates = []
         with open(path, "r", encoding="utf-8") as f:
             lines = f.readlines()[-500:]
         for line in lines:
             a = json.loads(line)
             imp = a.get("importance", 5)
-            # Skip low-importance entries for keyword search
-            if query and imp < 7:
+            if search_query and imp < 7:
                 continue
             match = True
-            if query:
-                match = query in a.get("content", "") or query in a.get("context", "")
+            if search_query:
+                words = search_query.split()
+                # Match if ANY keyword hits
+                match = any(w in a.get("content", "") or w in a.get("context", "") for w in words)
             if emotion_group:
                 emo = a.get("emotion", "")
                 if self._EMO_GROUPS.get(emo) != emotion_group:
                     match = False
             if match:
                 score = self._attenuate(a.get("recalled_count", 0), imp, a.get("created_at", time.time()))
-                if score > 0.3:  # Below threshold = functionally forgotten
+                if score > 0.3:
                     candidates.append((score, a))
         candidates.sort(key=lambda x: x[0], reverse=True)
-        return [a for _, a in candidates[:limit]] if candidates else []
+        return [a for _, a in candidates[:max(limit, 5)]] if candidates else []
 
     def get_archive_by_emotion(self, user_id: str, emotion: str, limit: int = 1) -> list[dict]:
         """Get archive entries matching an emotion group."""
@@ -478,28 +481,47 @@ class MemoryStore:
         return sorted(seen.values(), key=lambda x: x.get("importance", 0), reverse=True)
 
     def get_context_facts(self, user_id: str, limit: int = 20) -> list[dict]:
-        """Get top facts for LLM context. Returns user facts + 1-2 'me' facts."""
+        """Get top facts for LLM context, weighted by type importance."""
         profile = self.get_user(user_id)
         now = time.time()
+        # Type weights: profile > preference/relationship > event/behavior
+        type_weights = {"profile": 1.5, "preference": 1.2, "relationship": 1.2,
+                        "event": 0.8, "behavior": 0.8}
         scored = []
         for f in profile.core_facts:
             age_days = (now - f.get("created_at", now)) / 86400
             recency = 1.0 / (1.0 + age_days)
             importance = f.get("importance", 5) / 10.0
             accesses = min(f.get("access_count", 0), 10) / 10.0
-            score = importance * 0.5 + recency * 0.3 + accesses * 0.2
+            tw = type_weights.get(f.get("type", ""), 1.0)
+            score = importance * 0.5 * tw + recency * 0.3 + accesses * 0.2
             scored.append((score, f))
         scored.sort(key=lambda x: x[0], reverse=True)
-        # Split user vs me
         user_facts = [f for _, f in scored if f.get("subject", "user") == "user"][:limit - 2]
         me_facts = [f for _, f in scored if f.get("subject") == "me"][:2]
-        # Interleave: user fact, maybe me fact, user fact, maybe me fact...
         result = []
         for i, uf in enumerate(user_facts):
             result.append(uf)
             if i % 6 == 5 and me_facts:
                 result.append(me_facts.pop(0))
         return result
+
+    def _rewrite_query(self, query: str) -> str:
+        """Rewrite user query into search keywords using lightweight LLM."""
+        if len(query) < 10:
+            return query
+        try:
+            from ..ai.memory import _lite_chat, _parse_json
+            import asyncio
+            async def _do():
+                raw = await _lite_chat(
+                    "把用户的话改写成搜索关键词（空格分隔，5个词以内）。只输出关键词。",
+                    query[:200], 30,
+                )
+                return raw.strip()
+            return asyncio.run(_do())
+        except Exception:
+            return query
 
     # ------------------------------------------------------------------
     # Long-term memory: Summaries
