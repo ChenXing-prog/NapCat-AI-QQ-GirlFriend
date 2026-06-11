@@ -7,6 +7,45 @@ from ..memory.store import MemoryStore
 
 logger = logging.getLogger(__name__)
 
+# ---- Rate Limiting ----
+_rate_timestamps: dict[str, list[float]] = {}  # user_id → [timestamps]
+_rate_img_timestamps: dict[str, list[float]] = {}  # user_id → [image timestamps]
+
+_RATE_LIMITS = {
+    "admin":  (999, 999),   # (msgs/hour, images/hour)
+    "vip":    (60, 20),
+    "normal": (30, 5),
+}
+
+
+def check_rate_limit(user_id: str, memory: MemoryStore, is_image: bool = False) -> bool:
+    """Check if user has exceeded their rate limit. Returns True if allowed."""
+    profile = memory.get_user(user_id)
+    role = profile.preferences.get("role", "normal")
+    limits = _RATE_LIMITS.get(role, _RATE_LIMITS["normal"])
+    msg_limit, img_limit = limits
+    limit = img_limit if is_image else msg_limit
+    if limit >= 999:
+        return True  # admin, unlimited
+
+    now = time.time()
+    # Check message rate
+    ts_list = _rate_timestamps.setdefault(user_id, [])
+    ts_list[:] = [t for t in ts_list if now - t < 3600]
+    if len(ts_list) >= msg_limit:
+        return False
+    ts_list.append(now)
+
+    # Check image rate separately
+    if is_image:
+        img_list = _rate_img_timestamps.setdefault(user_id, [])
+        img_list[:] = [t for t in img_list if now - t < 3600]
+        if len(img_list) >= img_limit:
+            return False
+        img_list.append(now)
+
+    return True
+
 # ---- Constants ----
 MSG_BUFFER_MIN = 3.0
 MSG_BUFFER_MAX = 20.0

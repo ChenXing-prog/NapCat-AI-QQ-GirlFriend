@@ -238,10 +238,44 @@ async def handle_clinginess_cmd(user_id: str, message: str, memory, qq_client):
             f"你 {cfg['hours']} 小时不说话我就会来找你啦")
 
 
+def is_user_mgmt_command(message: str) -> bool:
+    t = message.strip()
+    return t.startswith("//拉黑 ") or t.startswith("//设为VIP ") or t == "//用户列表"
+
+
+async def handle_user_mgmt(user_id: str, message: str, memory, qq_client, admin_qq):
+    if user_id != admin_qq:
+        await qq_client.send_private_msg(user_id, "只有管理员才能管理用户哦")
+        return
+    t = message.strip()
+    if t == "//用户列表":
+        users = []
+        for f in sorted(memory.users_dir.glob("*.json")):
+            try:
+                u = memory.get_user(f.stem)
+                role = u.preferences.get("role", "normal")
+                users.append(f"{u.user_id} [{role}] {u.name or '?'} {u.total_messages}条")
+            except: pass
+        await qq_client.send_private_msg(user_id, "\n".join(["用户列表："] + users[:20]))
+    elif t.startswith("//拉黑 "):
+        target = t.split(" ", 1)[1].strip()
+        profile = memory.get_user(target)
+        profile.preferences["role"] = "normal"
+        memory.save_user(profile)
+        await qq_client.send_private_msg(user_id, f"已把 {target} 设为普通用户")
+    elif t.startswith("//设为VIP "):
+        target = t.split(" ", 1)[1].strip()
+        profile = memory.get_user(target)
+        profile.preferences["role"] = "vip"
+        memory.save_user(profile)
+        await qq_client.send_private_msg(user_id, f"已把 {target} 设为 VIP")
+
+
 def is_any_command(message: str) -> bool:
     text = message.strip()
     if text == "/":
         return False
-    return is_menu_command(text) or is_ban_command(text) or is_admin_command(text) or \
+    return is_menu_command(text) or is_clinginess_command(text) or is_ban_command(text) or \
+           is_admin_command(text) or is_user_mgmt_command(text) or \
            check_persona_cmd(text) is not None or \
            text in ("换人设", "选人设", "切换人设")

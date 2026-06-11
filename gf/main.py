@@ -34,11 +34,13 @@ from .handlers.commands import (
     is_ban_command, handle_ban, is_admin_command, handle_admin_cmd,
     classify_and_add, check_persona_cmd, handle_persona, is_any_command,
     is_menu_command, is_clinginess_command, handle_clinginess_cmd,
+    is_user_mgmt_command, handle_user_mgmt,
     _MENU_TEXT, _CLINGINESS_LEVELS,
 )
 from .handlers.buffer import (
     handle_incoming, calc_wait, flush_buffer,
     confide_start, confide_end, confide_collect, is_confide,
+    check_rate_limit,
 )
 
 # ---------------------------------------------------------------------------
@@ -93,6 +95,12 @@ async def handle_private_message(user_id: str, message: str):
     """Route incoming QQ messages: commands → immediate, confide → collect, chat → buffer."""
     cfg = get_config()
 
+    # Rate limit check (skip for admin)
+    is_img = "[CQ:image" in message
+    if not check_rate_limit(user_id, _memory, is_image=is_img):
+        await _qq_client.send_private_msg(user_id, "你发的太快了，休息一下吧 (｡･ω･｡)")
+        return
+
     # Image detection — download via NapCat get_file, describe with vision model
     if is_image_message(message):
         file_ids = extract_file_ids(message)
@@ -145,6 +153,10 @@ async def _handle_command_direct(user_id: str, message: str):
 
     if is_menu_command(message):
         await _qq_client.send_private_msg(user_id, _MENU_TEXT)
+        return
+
+    if is_user_mgmt_command(message):
+        await handle_user_mgmt(user_id, message, _memory, _qq_client, cfg.admin_qq)
         return
 
     if is_clinginess_command(message):
