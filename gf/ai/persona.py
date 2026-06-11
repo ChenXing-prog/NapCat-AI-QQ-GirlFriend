@@ -173,8 +173,43 @@ def build_share_prompt(
     facts: list[str], summaries: list[str], emotions: list[str],
     archive_hint: str = "", moment_hint: str = "",
 ) -> str:
-    """Build prompt for proactive daily sharing. Uses full memory context."""
+    """Build context-driven proactive share prompt.
+
+    The tone is chosen based on recent emotional context:
+    - sad/anxious/vulnerable → caring, low-pressure
+    - warm/intimate → playful, share something fun
+    - late night → soft, no expectation of reply
+    - default → casual daily share
+    """
     display_name = bot_name if bot_name != "小暖" else persona.name
+
+    # Summarize emotional context
+    emo_summary = "平稳"
+    if emotions:
+        recent = emotions[-3:]
+        dominant = set(e.split("(")[0] if "(" in e else e for e in recent)
+        if "sad" in str(dominant) or "anxious" in str(dominant) or "vulnerable" in str(dominant):
+            emo_summary = "ta最近心情不太好，需要被关心"
+        elif "warm" in str(dominant) or "intimate" in str(dominant):
+            emo_summary = "ta最近心情不错，可以活泼一点"
+        elif "tired" in str(dominant):
+            emo_summary = "ta最近很累，轻轻说句话就好"
+
+    # Build emotion guidance
+    now_hour = datetime.now().hour
+    is_late = now_hour >= 23 or now_hour < 6
+    guidance_parts = []
+    if any(kw in str(emotions).lower() for kw in ["sad", "anxious", "vulnerable", "tired"]):
+        guidance_parts.append("ta最近心情不太好。主动关心一下，但不要给压力。可以说'我在呢，不用回我'。不要问问题。")
+    elif any(kw in str(emotions).lower() for kw in ["warm", "intimate"]):
+        guidance_parts.append("ta最近心情不错。可以撒个娇，分享一件开心的小事。")
+    if is_late:
+        guidance_parts.append("现在很晚了。轻声说句话就好，ta不回也没关系。可以只发一个表情包不说话。")
+    if archive_hint:
+        guidance_parts.append(f"可以自然地提到过去的事：{archive_hint}")
+    emo_guide = "\n".join(guidance_parts) if guidance_parts else "自然随意就好。"
+
+    # Memory context
     memory_block = ""
     if facts:
         memory_block += "关于ta你记得：\n" + "\n".join(f"- {f}" for f in facts[:5]) + "\n"
@@ -182,30 +217,29 @@ def build_share_prompt(
         memory_block += "最近聊天概要：\n" + "\n".join(f"- {s}" for s in summaries[:2]) + "\n"
     if emotions:
         memory_block += f"最近的氛围：{' → '.join(emotions[-3:])}\n"
-    if archive_hint:
-        memory_block += f"你可以自然地提到：{archive_hint}\n"
-    if moment_hint:
-        memory_block += f"温暖的回忆：{moment_hint}\n"
 
     topics_hint = ", ".join(random.sample(persona.daily_topics, min(3, len(persona.daily_topics)))) if persona.daily_topics else "日常小事"
     sticker_guide = _build_weighted_guide(persona)
 
     return f"""你是「{display_name}」，{persona.display_name}。你在 QQ 上主动找{user_name}说话。
-{user_name}已经有{hours_silent:.0f}小时没说话了。
+{user_name}已经有{hours_silent:.0f}小时没说话了。最近氛围：{emo_summary}。
 
-你不是在回复ta——你是在**主动发消息**。可能是想分享一件刚发生的小事、想关心一下ta怎么样了、想麻烦ta一件小事撒个娇、或者单纯想骚扰一下。关键是自然，不要每次都一样。
+你不是在回复ta——你是在主动发消息。根据最近的氛围来决定语气：
+
+## 怎么选语气
+{emo_guide}
 
 ## 你的性格
 {persona.personality}
 
-## 灵感参考（不要照搬，自己发挥）
+## 灵感参考（不要照搬）
 {topics_hint}
 
 {memory_block}
 ## 要求
-- 1-2 句话，像突然想起来一样自然
-- 可以带 1 个表情包标签 [tag]
-- 不要问"在干嘛"（太像查岗）
+- 1-2 句话，不要用问号结尾（你不是在质问ta）
+- 可以只发一个表情包标签，不发文字
+- 深夜或ta心情不好时，说"我在呢"比"在干嘛"好一百倍
 - 禁止 emoji，颜文字贴句尾：{persona.emoji_style}
 
 ## 表情包标签
