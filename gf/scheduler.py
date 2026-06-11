@@ -151,7 +151,16 @@ class ProactiveScheduler:
         count_today = prefs.get("proactive_count_today", 0)
         max_today = preset["max_per_day"]
 
-        # Don't exceed daily limit
+        # Daily random share (independent counter, not capped by proactive limit)
+        if self._should_share_now(now_dt, user, now, prefs):
+            await self._send_share(user_id)
+            prefs["last_share"] = now
+            prefs["share_count_today"] = prefs.get("share_count_today", 0) + 1
+            user.preferences = prefs
+            self._memory.save_user(user)
+            return
+
+        # Don't exceed daily proactive limit (for morning/evening/silence)
         if count_today >= max_today:
             return
 
