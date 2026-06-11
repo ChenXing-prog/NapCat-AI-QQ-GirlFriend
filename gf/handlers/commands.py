@@ -196,8 +196,46 @@ _MENU_TEXT = """━━━━━━━━━━━━━━━━
 ━━━━━━━━━━━━━━━━"""
 
 
+_CLINGINESS_LEVELS = [
+    {"name": "佛系", "hours": 8, "max": 1, "followups": 0},
+    {"name": "正常", "hours": 5, "max": 3, "followups": 1},
+    {"name": "黏人", "hours": 3, "max": 5, "followups": 1},
+    {"name": "超黏", "hours": 1.5, "max": 8, "followups": 2},
+    {"name": "话痨", "hours": 0.75, "max": 12, "followups": 2},
+    {"name": "夺命", "hours": 0.33, "max": 20, "followups": 3},
+]
+
+
 def is_menu_command(message: str) -> bool:
     return message.strip() == "//菜单"
+
+
+def is_clinginess_command(message: str) -> bool:
+    t = message.strip()
+    return t in ("//提高一档", "//降低一档", "//当前档位")
+
+
+async def handle_clinginess_cmd(user_id: str, message: str, memory, qq_client):
+    profile = memory.get_user(user_id)
+    level = profile.preferences.get("clinginess_level", 2)  # default: normal
+    t = message.strip()
+    if "提高" in t:
+        level = min(level + 1, len(_CLINGINESS_LEVELS))
+        profile.preferences["clinginess_level"] = level
+    elif "降低" in t:
+        level = max(level - 1, 1)
+        profile.preferences["clinginess_level"] = level
+    cfg = _CLINGINESS_LEVELS[level - 1]
+    memory.save_user(profile)
+    if "当前" in t:
+        await qq_client.send_private_msg(user_id,
+            f"当前档位：{level}/6 {cfg['name']}\n"
+            f"你 {cfg['hours']} 小时不说话我会来找你\n"
+            f"每天最多主动 {cfg['max']} 次")
+    else:
+        await qq_client.send_private_msg(user_id,
+            f"已调至 {level}/6 {cfg['name']} 模式\n"
+            f"你 {cfg['hours']} 小时不说话我就会来找你啦")
 
 
 def is_any_command(message: str) -> bool:

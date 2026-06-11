@@ -32,22 +32,20 @@ logger = logging.getLogger("gf.scheduler")
 # Clinginess presets
 # ---------------------------------------------------------------------------
 CLINGINESS_PRESETS = {
-    "clingy": {
-        "label": "黏人",
-        "silence_hours": 2,     # Check after 2h of silence
-        "max_per_day": 5,       # Up to 5 proactive messages/day
-    },
-    "normal": {
-        "label": "正常",
-        "silence_hours": 5,
-        "max_per_day": 3,
-    },
-    "chill": {
-        "label": "佛系",
-        "silence_hours": 8,
-        "max_per_day": 1,
-    },
+    "clingy": {"label": "黏人", "silence_hours": 2, "max_per_day": 5},
+    "normal": {"label": "正常", "silence_hours": 5, "max_per_day": 3},
+    "chill":  {"label": "佛系", "silence_hours": 8, "max_per_day": 1},
 }
+
+# 6-level clinginess (imported for scheduler use)
+_CLINGINESS_LEVELS = [
+    {"name": "佛系", "hours": 8, "max": 1, "followups": 0},
+    {"name": "正常", "hours": 5, "max": 3, "followups": 1},
+    {"name": "黏人", "hours": 3, "max": 5, "followups": 1},
+    {"name": "超黏", "hours": 1.5, "max": 8, "followups": 2},
+    {"name": "话痨", "hours": 0.75, "max": 12, "followups": 2},
+    {"name": "夺命", "hours": 0.33, "max": 20, "followups": 3},
+]
 
 # Default morning/evening windows (local time)
 DEFAULT_MORNING_START = 7   # 7:00
@@ -139,8 +137,14 @@ class ProactiveScheduler:
             return
 
         prefs = user.preferences
-        clinginess = prefs.get("clinginess", "normal")
-        preset = CLINGINESS_PRESETS.get(clinginess, CLINGINESS_PRESETS["normal"])
+        level = prefs.get("clinginess_level", 2)  # default: normal
+        if 1 <= level <= len(_CLINGINESS_LEVELS):
+            cfg = _CLINGINESS_LEVELS[level - 1]
+            silence_hours = cfg["hours"]
+            max_per_day = cfg["max"]
+        else:
+            silence_hours = 5
+            max_per_day = 3
 
         # Reset daily counter if it's a new day
         today_str = now_dt.strftime("%Y-%m-%d")
@@ -149,7 +153,6 @@ class ProactiveScheduler:
             prefs["proactive_count_today"] = 0
 
         count_today = prefs.get("proactive_count_today", 0)
-        max_today = preset["max_per_day"]
 
         # Daily random share (independent counter, not capped by proactive limit)
         if self._should_share_now(now_dt, user, now, prefs):
@@ -161,7 +164,7 @@ class ProactiveScheduler:
             return
 
         # Don't exceed daily proactive limit (for morning/evening/silence)
-        if count_today >= max_today:
+        if count_today >= max_per_day:
             return
 
         # Check each trigger type
@@ -187,7 +190,7 @@ class ProactiveScheduler:
             return
 
         # 4. Silence detection — 50% share instead of check-in
-        if not triggered and self._is_silent(user, now, preset["silence_hours"]) \
+        if not triggered and self._is_silent(user, now, silence_hours) \
                 and self._cooldown_ok(prefs, now, min_interval_hours=1):
             if random.random() < 0.5:
                 await self._send_share(user_id)
@@ -216,7 +219,7 @@ class ProactiveScheduler:
 
         logger.info(
             f"Proactive [{trigger_type}] → {user_id} "
-            f"(count: {count_today + 1}/{max_today})"
+            f"(count: {count_today + 1}/{max_per_day})"
         )
 
     # ------------------------------------------------------------------

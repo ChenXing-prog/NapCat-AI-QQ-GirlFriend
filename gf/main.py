@@ -33,7 +33,8 @@ from .scheduler import ProactiveScheduler
 from .handlers.commands import (
     is_ban_command, handle_ban, is_admin_command, handle_admin_cmd,
     classify_and_add, check_persona_cmd, handle_persona, is_any_command,
-    is_menu_command, _MENU_TEXT,
+    is_menu_command, is_clinginess_command, handle_clinginess_cmd,
+    _MENU_TEXT, _CLINGINESS_LEVELS,
 )
 from .handlers.buffer import (
     handle_incoming, calc_wait, flush_buffer,
@@ -144,6 +145,10 @@ async def _handle_command_direct(user_id: str, message: str):
 
     if is_menu_command(message):
         await _qq_client.send_private_msg(user_id, _MENU_TEXT)
+        return
+
+    if is_clinginess_command(message):
+        await handle_clinginess_cmd(user_id, message, _memory, _qq_client)
         return
 
     if is_ban_command(message):
