@@ -14,7 +14,7 @@ _rate_img_timestamps: dict[str, list[float]] = {}  # user_id → [image timestam
 _RATE_LIMITS = {
     "admin":  (999, 999),   # (msgs/hour, images/hour)
     "vip":    (60, 20),
-    "normal": (30, 5),
+    "normal": (20, 3),
 }
 
 
