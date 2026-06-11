@@ -165,9 +165,7 @@ async def handle_persona(user_id: str, persona_id: Optional[str], memory, qq_cli
 
 # ---- Helpers ----
 
-_MENU_TEXT = """━━━━━━━━━━━━━━━━
-  ✦ 指令菜单 ✦
-━━━━━━━━━━━━━━━━
+_MENU_TEXT = """✦ 指令菜单 ✦
 
 🎭 人设切换
   换人设 / 选人设
@@ -192,8 +190,7 @@ _MENU_TEXT = """━━━━━━━━━━━━━━━━
 💬 聊天
   /          → 倾诉模式
   （再发 / 结束，认真回复）
-  //菜单     → 显示此菜单
-━━━━━━━━━━━━━━━━"""
+  //菜单     → 显示此菜单"""
 
 
 _CLINGINESS_LEVELS = [
