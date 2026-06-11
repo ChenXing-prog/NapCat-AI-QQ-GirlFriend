@@ -33,6 +33,7 @@ from .scheduler import ProactiveScheduler
 from .handlers.commands import (
     is_ban_command, handle_ban, is_admin_command, handle_admin_cmd,
     classify_and_add, check_persona_cmd, handle_persona, is_any_command,
+    is_menu_command, _MENU_TEXT,
 )
 from .handlers.buffer import (
     handle_incoming, calc_wait, flush_buffer,
@@ -140,6 +141,10 @@ async def _handle_command_direct(user_id: str, message: str):
     """Process commands immediately (bypass buffer)."""
     cfg = get_config()
     user = _memory.get_user(user_id)
+
+    if is_menu_command(message):
+        await _qq_client.send_private_msg(user_id, _MENU_TEXT)
+        return
 
     if is_ban_command(message):
         await handle_ban(user_id, _last_sticker_sent, _memory, _qq_client)

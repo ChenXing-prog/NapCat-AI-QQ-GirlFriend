@@ -165,10 +165,36 @@ async def handle_persona(user_id: str, persona_id: Optional[str], memory, qq_cli
 
 # ---- Helpers ----
 
+_MENU_TEXT = """📋 指令菜单
+
+**人设切换**
+  换人设 / 选人设 → 查看所有人设
+  我要{人设名}   → 直接切换（如：我要傲娇青梅）
+  1-6           → 数字选择
+
+**表情包**
+  不喜欢这个 / 换一个 → 拉黑刚才发的表情包
+  表情包分类 / 表情包统计 → 查看分类（管理员）
+  发图 + 分类到 {标签} → 添加表情包（管理员）
+
+**主动联系**
+  //提高一档 → 更频繁找我
+  //降低一档 → 少找我
+  //当前档位 → 查看当前频率
+
+**聊天**
+  /              → 倾诉模式（再发 / 结束）
+  //菜单         → 显示本菜单"""
+
+
+def is_menu_command(message: str) -> bool:
+    return message.strip() == "//菜单"
+
+
 def is_any_command(message: str) -> bool:
     text = message.strip()
     if text == "/":
         return False
-    return is_ban_command(text) or is_admin_command(text) or \
+    return is_menu_command(text) or is_ban_command(text) or is_admin_command(text) or \
            check_persona_cmd(text) is not None or \
            text in ("换人设", "选人设", "切换人设")
