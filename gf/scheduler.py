@@ -189,8 +189,9 @@ class ProactiveScheduler:
             self._memory.save_user(user)
             return
 
-        # 4. Silence detection — 50% share instead of check-in
-        if not triggered and self._is_silent(user, now, silence_hours) \
+        # 4. Silence detection — skip during night (23:00-7:00)
+        is_night = now_dt.hour >= 23 or now_dt.hour < 7
+        if not triggered and not is_night and self._is_silent(user, now, silence_hours) \
                 and self._cooldown_ok(prefs, now, min_interval_hours=1):
             if random.random() < 0.5:
                 await self._send_share(user_id)
